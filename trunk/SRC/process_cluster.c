@@ -140,7 +140,7 @@ rrr_t* compute_new_rrr(cluster_t *cl, int tid, val_t *Wstruct,
   double *restrict D,         *restrict L;
   double *restrict DL,        *restrict DLL;
   double *restrict D_parent,  *restrict L_parent;
-  double *restrict DL_parent, *restrict DLL_parent;
+  double *DL_parent,          *DLL_parent;
 
   int    i, k, p, info;
   double tmp;

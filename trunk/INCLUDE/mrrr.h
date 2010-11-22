@@ -58,7 +58,7 @@
 
 int mrrr(char *jobz, char *range, int *n, double *restrict D,
 	 double *restrict E, double *vl, double *vu, int *il, int *iu,
-	 bool *tryrac, int *m, double *W, double *Z, int *ldz,
+	 int *tryrac, int *m, double *W, double *Z, int *ldz,
 	 int *Zsupp);
 
 /* Arguments:
