@@ -16,6 +16,10 @@ ARFLAGS = rcs
 # to 0 by default
 COMPLEX_SUPPORT = 0
 
-# Compile routines without adding necessary LAPACK routines 
-# to 'libmrrr.a'; default = 0
-NOLAPACK = 0
+# To build 'libmrrr.a' without adding necessary LAPACK routines 
+# for the to the archive set value to 0; default value is 1
+INCLAPACK = 1
+
+# On some systems 'spinlocks' are not supported, therefore 
+# here the flag to use 'mutexes' instead; default value is 1
+SPINLOCK_SUPPORT = 1

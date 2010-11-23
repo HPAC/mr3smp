@@ -9,12 +9,16 @@ ifeq ($(COMPLEX_SUPPORT),1)
  CFLAGS += -DCOMPLEX_SUPPORTED
 endif
 
+ifeq ($(SPINLOCK_SUPPORT),0)
+ CFLAGS += -DNOSPINLOCKS
+endif
+
 # Source files
 HEADERS := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/*.h))
 CSRCS   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/*.c))
 COBJS = $(CSRCS:.c=.o)
 
-ifeq ($(NOLAPACK),1)
+ifeq ($(INCLAPACK),0)
  FSRCS   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/odscal.f))
  FOBJS = $(FSRCS:.f=.o)
 else

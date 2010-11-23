@@ -51,7 +51,11 @@
 
 typedef struct {
   int             value;
+#ifdef NOSPINLOCKS
+  pthread_mutex_t    lock;
+#else
   pthread_spinlock_t lock;
+#endif
 } counter_t;
 
 counter_t *PMR_create_counter(int init_value);
