@@ -62,7 +62,11 @@ typedef struct {
   int             num_tasks;
   task_t          *head;
   task_t          *back;
+#ifdef NOSPINLOCKS
+  pthread_mutex_t    lock;
+#else
   pthread_spinlock_t lock;
+#endif
 } queue_t;
 
 

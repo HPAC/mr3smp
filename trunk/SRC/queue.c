@@ -65,7 +65,11 @@ queue_t *PMR_create_empty_queue(void)
   queue->head      = NULL;
   queue->back      = NULL;
   
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_init(&queue->lock, NULL);
+#else
   info = pthread_spin_init(&queue->lock, PTHREAD_PROCESS_PRIVATE);
+#endif
   assert(info == 0);
 
   return(queue);
@@ -75,7 +79,11 @@ queue_t *PMR_create_empty_queue(void)
 
 void PMR_destroy_queue(queue_t *queue)
 {
+#ifdef NOSPINLOCKS
+  pthread_mutex_destroy(&queue->lock);
+#else
   pthread_spin_destroy(&queue->lock);
+#endif
   free(queue);
 }
 
@@ -85,12 +93,20 @@ int PMR_get_num_tasks(queue_t *queue)
 {
   int info, num_tasks;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_lock(&queue->lock);
+#else
   info = pthread_spin_lock(&queue->lock);
+#endif
   assert(info == 0);
 
   num_tasks = queue->num_tasks;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_unlock(&queue->lock);
+#else
   info = pthread_spin_unlock(&queue->lock);
+#endif
   assert(info == 0);
 
   return(num_tasks);
@@ -126,7 +142,11 @@ int PMR_insert_task_at_back(queue_t *queue, task_t *task)
 {
   int info;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_lock(&queue->lock);
+#else
   info = pthread_spin_lock(&queue->lock);
+#endif
   assert(info == 0);
 
   queue->num_tasks++;
@@ -139,7 +159,11 @@ int PMR_insert_task_at_back(queue_t *queue, task_t *task)
     queue->back->next = task;
   queue->back = task;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_unlock(&queue->lock);
+#else
   info = pthread_spin_unlock(&queue->lock);
+#endif
   assert(info == 0);
   
   return(info);
@@ -152,7 +176,11 @@ task_t *PMR_remove_task_at_front(queue_t *queue)
   int    info;
   task_t *task;
   
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_lock(&queue->lock);
+#else
   info = pthread_spin_lock(&queue->lock);
+#endif
   assert(info == 0);
   
   task = queue->head;
@@ -171,7 +199,11 @@ task_t *PMR_remove_task_at_front(queue_t *queue)
     }
   }
   
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_unlock(&queue->lock);
+#else
   info = pthread_spin_unlock(&queue->lock);
+#endif
   assert(info == 0);
   
   return(task);
@@ -185,7 +217,11 @@ task_t *PMR_remove_task_at_back (queue_t *queue)
   int    info;
   task_t *task;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_lock(&queue->lock);
+#else
   info = pthread_spin_lock(&queue->lock);
+#endif
   assert(info == 0);
   
   task = queue->back;
@@ -204,7 +240,11 @@ task_t *PMR_remove_task_at_back (queue_t *queue)
     }
   }
   
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_unlock(&queue->lock);
+#else
   info = pthread_spin_unlock(&queue->lock);
+#endif
   assert(info == 0);
 
   return(task);
