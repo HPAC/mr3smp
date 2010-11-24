@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#ifdef COMPLEX_SUPPORTED
 #include <complex.h>
+#endif
 #include "global.h"
 #include "mrrr.h"  
 
