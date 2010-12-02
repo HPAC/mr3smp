@@ -20,7 +20,7 @@ COMPLEX_SUPPORT = 0
 # To build 'libmrrr.a' without adding necessary LAPACK routines 
 # for the to the archive set value to 0; in this case the code has to be
 # linked to LAPACK and BLAS; default value is 1
-INCLAPACK = 0
+INCLAPACK = 1
 
 # On some systems 'spinlocks' are not supported, therefore 
 # here the flag to use 'mutexes' instead; default value is 1
