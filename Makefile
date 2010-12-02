@@ -19,8 +19,7 @@ CSRCS   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/*.c))
 COBJS = $(CSRCS:.c=.o)
 
 ifeq ($(INCLAPACK),0)
- FSRCS   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/odscal.f))
- FOBJS = $(FSRCS:.f=.o)
+ CFLAGS += -DNOFORTRAN
 else
  FSRCS   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/*.f))
  FOBJS = $(FSRCS:.f=.o)
