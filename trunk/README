@@ -15,7 +15,10 @@ Building the archive libmrrr.a:
    $cp ./INSTALL/make.inc.intel ./make.inc
    If you do not find a file matching your compiler, then use any of 
    the files as a basis to edit.
-2) Edit the file 'make.inc' according to your system.
+2) Edit the file 'make.inc' according to your system. Especially, set 
+   the variable INCLAPACK to zero if you plan to link to LAPACK and 
+   BLAS, instead of compiling the necessary routines and including 
+   them in the archive. (LAPACK 3.3 or equivalent is recommended.)
 3) Run make.
 
 

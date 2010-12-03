@@ -58,6 +58,9 @@
 #define EMPTY_RQ_ITER 20
 
 
+static inline void mrrr_dscal(int*, double*, double restrict*, int *);
+
+
 
 int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left, 
 		       workQ_t *workQ, val_t *Wstruct, vec_t *Zstruct, 
@@ -296,11 +299,7 @@ int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left,
     
     /* normalize eigenvector */
     suppsize = i_Zto - i_Zfrom + 1;
-#ifdef NOFORTRAN
-    dscal_(&suppsize, &norminv, &Z[i_Zfrom + zind*ldz], &IONE);
-#else
-    odscal_(&suppsize, &norminv, &Z[i_Zfrom + zind*ldz], &IONE);
-#endif    
+    mrrr_dscal(&suppsize, &norminv, &Z[i_Zfrom + zind*ldz], &IONE);
 
     sigma = L[bl_size-1];
     W[i]  = lambda + sigma;
@@ -321,4 +320,21 @@ int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left,
   free(sng);
   
   return(0);
+}
+
+
+
+/* non-optimized, non-threaded DSCAL replacement */
+static inline 
+void mrrr_dscal(int *n, double *alpha, double restrict *x, int *incx)
+{
+  int i;
+  int stride = *incx;
+  int size   = *n;
+  double s   = *alpha;
+
+  for (i=0; i<size; i++)
+    x[i * stride] *= s; 
+
+  return;
 }

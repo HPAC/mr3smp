@@ -1,5 +1,5 @@
 # Compiler for C and Fortran
-# Fortran compiler is not used if INCLAPACK is set to 0
+# Fortran compiler is not used if INCLAPACK is set to zero
 CC = gcc
 FC = gfortran
 
