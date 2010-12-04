@@ -4,11 +4,17 @@ LD  = gfortran
 FFLAGS   = -Wall -g -funderscoring
 LDFLAGS  = -D_THREAD_SAFE=1 -pthread
 
-# LAPACK and BLAS only needs to be linked if build without including 
-# the routines by setting INCLAPACK to zero
 INCPATH = ../../../INCLUDE
-LIBPATH = ../../../LIB $(HOME)/libs/lapack-3.3
-LIBS = mrrr lapack_gnu_LINUX blas_gnu_LINUX gfortran m pthread rt
+LIBPATH = ../../../LIB 
+
+# # Build without including LAPACK and BLAS routines  
+# # by setting INCLAPACK to zero
+# LAPACKPATH = $(HOME)/libs/lapack-3.3.0
+# LIBS = mrrr lapack_gnu_LINUX blas_gnu_LINUX gfortran m pthread rt
+
+# Otherwise
+LAPACKPATH = 
+LIBS = mrrr gfortran m pthread rt
 
 
 ######################## do not edit below ###########################
@@ -16,6 +22,8 @@ LIBS = mrrr lapack_gnu_LINUX blas_gnu_LINUX gfortran m pthread rt
 
 FFLAGS  += -I$(INCPATH)
 LDFLAGS += -I$(INCPATH)
+LIBPATH += $(LAPACKPATH)
+
 
 .PHONY: all
 
