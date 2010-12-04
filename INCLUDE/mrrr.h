@@ -197,6 +197,28 @@ int mrrr(char *jobz, char *range, int *n, double *restrict D,
 #define STASK_NOENQUEUE      10
 
 
+
+#ifdef NOLAPACK
+#define dlamch_ odmch_
+#define dlanst_ odnst_
+#define dlarrr_ odrrr_
+#define dlarra_ odrra_
+#define dlarrc_ odrrc_
+#define dlarrd_ odrrd_
+#define dlarrb_ odrrb_
+#define dlarrk_ odrrk_
+#define dlaebz_ odebz_
+#define dlarnv_ odrnv_
+#define dlarrf_ odrrf_
+#define dlar1v_ odr1v_
+#define dlarrj_ odrrj_
+#define dstemr_ odstmr_
+#define dlasq2_ odsq2_
+#define dscal_  odscl_
+#endif
+
+
+
 /* LAPACK function prototypes of routines that need to be available;
  * Note: type specifier 'extern' does not matter in declaration
  * so here used to mark routines from LAPACK and BLAS libraries */
@@ -239,7 +261,6 @@ extern void   dstemr_(char*, char*, int*, double*, double*, double*,
 /* BLAS function prototypes - renaming for preventing multithreaded
  * version to be called when linked to a BLAS implementation */
 extern void   dscal_(int*, double*, double*, int*);
-       void  odscal_(int*, double*, double*, int*);
 
 
 /* LAPACK routines for wrapper functions of the symmetric and the Hermitian 
