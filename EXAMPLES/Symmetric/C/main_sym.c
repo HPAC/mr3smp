@@ -15,13 +15,13 @@
 #include "global.h"
 #include "mrrr.h"
 
-void init_symmetric_matrix(double*, int, int);
+static void init_symmetric_matrix(double*, int, int);
 
 
 
 int main(int argc, char **argv)
 {
-  int n   = 300;
+  int n   = 100;
   int lda = n;
   int ldz = n;
   int nz  = n;
@@ -40,10 +40,10 @@ int main(int argc, char **argv)
   Z = (double *) malloc((size_t) n*nz*sizeof(double));
   assert(Z != NULL);
 
-
   /* Initialize symmetric matrix fully, that is upper and lower 
    * triangular part are inbitialized */
-  init_symmetric_matrix(A,n,lda);
+  init_symmetric_matrix(A, n, lda);
+
 
   /* Calling "dsyeig" to compute all or a subset of eigenvalues and 
    * optinally eigenvectors of a dense symmetric matrix using LAPACK 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 
 /* Auxiliary routine to initialize matrix */
-void init_symmetric_matrix(double *A, int n, int lda)
+static void init_symmetric_matrix(double *A, int n, int lda)
 {
   int i, j;
 

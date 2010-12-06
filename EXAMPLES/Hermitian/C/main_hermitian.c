@@ -16,13 +16,13 @@
 #include "global.h"
 #include "mrrr.h"
 
-void init_hermitian_matrix(double complex*, int, int);
+static void init_hermitian_matrix(double complex*, int, int);
 
 
 
 int main(int argc, char **argv)
 {
-  int            n   = 300;
+  int            n   = 100;
   int            lda = n;
   int            ldz = n;
   int            nz  = n;
@@ -42,10 +42,10 @@ int main(int argc, char **argv)
   Z = (double complex *) malloc((size_t) n*nz*sizeof(double complex));
   assert(Z != NULL);
 
-
   /* Initialize hermitian matrix fully, that is upper and lower 
    * triangular part are inbitialized */
   init_hermitian_matrix(A,n,lda);
+
 
   /* Calling "dsyeig" to compute all or a subset of eigenvalues and 
    * optinally eigenvectors of a dense hermitian matrix using LAPACK 
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
 
 /* Auxiliary routine to initialize matrix */
-void init_hermitian_matrix(double complex *A, int n, int lda)
+static void init_hermitian_matrix(double complex *A, int n, int lda)
 {
   int i, j;
   double tmp1, tmp2;
@@ -89,7 +89,9 @@ void init_hermitian_matrix(double complex *A, int n, int lda)
     }
   }
 
-  for (j=0; j<n; j++)
+  for (j=0; j<n; j++) {
     for (i=0; i<j; i++)
-      A[ i + j*lda ] = A[ j + i*lda ];
+      A[ i + j*lda ] = conj(A[ j + i*lda ]);
+    A[ j + j*lda ] = creal(A[ j + j*lda ]) + 0.0*I;
+  }
 }
