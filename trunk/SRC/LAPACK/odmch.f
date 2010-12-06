@@ -117,7 +117,7 @@
       END
 ************************************************************************
 *
-      DOUBLE PRECISION FUNCTION DLAMC3( A, B )
+      DOUBLE PRECISION FUNCTION ODMC3( A, B )
 *
 *  -- LAPACK auxiliary routine (version 3.2) --
 *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
@@ -130,7 +130,7 @@
 *  Purpose
 *  =======
 *
-*  DLAMC3  is intended to force  A  and  B  to be stored prior to doing
+*  ODMC3  is intended to force  A  and  B  to be stored prior to doing
 *  the addition of  A  and  B ,  for use in situations where optimizers
 *  might hold one of these in a register.
 *
@@ -145,11 +145,11 @@
 *
 *     .. Executable Statements ..
 *
-      DLAMC3 = A + B
+      ODMC3 = A + B
 *
       RETURN
 *
-*     End of DLAMC3
+*     End of ODMC3
 *
       END
 *

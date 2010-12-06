@@ -3,7 +3,7 @@
       INTEGER N, NMAX, JMAX, IL, IU, M, LDA, LDZ, ZERO,
      $        SEED
       PARAMETER (NMAX=1000, JMAX=NMAX, LDA=NMAX, LDZ=NMAX, ZERO=0, 
-     $           SEED=1)
+     $           SEED=12)
 
       DOUBLE PRECISION VL, VU, W(NMAX)      
       COMPLEX*16 A(NMAX,NMAX), Z(NMAX,JMAX)
@@ -16,9 +16,14 @@
 *     Intialize Hermitian matrix A of size N-by-N
       N = 300
 
+      CALL SRAND(SEED)
       DO 100, I=1,N
          DO 200, J=1,I
-            A(I,J) = COMPLEX(RAND(),RAND())
+            IF (I .EQ. J) THEN
+               A(I,J) = COMPLEX(RAND(),ZERO)
+            ELSE
+               A(I,J) = COMPLEX(RAND(),RAND())
+            ENDIF
  200     CONTINUE
  100  CONTINUE
 
