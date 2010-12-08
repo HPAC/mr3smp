@@ -2,6 +2,8 @@
  * using the multithreaded MRRR for the tridiagonal stage. */
 
 #include <stdlib.h>
+#include <math.h>
+#include <float.h>
 #include <assert.h>
 #ifdef COMPLEX_SUPPORTED
 #include <complex.h>
@@ -10,6 +12,13 @@
 #include "mrrr.h"  
 
 
+static double dscale_matrix(char*, char*, int*, double*, int*, 
+			    double*, double*, double*);
+static double zscale_matrix(char*, char*, int*, double complex*, int*,
+			    double*, double*, double complex*);
+
+
+/* Routine for the dense symmetric eigenproblem */
 int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A, 
 	   int *ldap, double *vlp, double *vup, int *ilp, int *iup, 
 	   int *mp, double *W, double *Z, int *ldzp)
@@ -21,7 +30,10 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   double *D, *E, *TAU;
   double *work;
   int    *Zsupp;
-  int    info;
+  int    info, ione=1;
+
+  double scale = 1.0;
+  double invscale;
 
   bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
   bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
@@ -39,7 +51,6 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
     if (*ilp<1 || *ilp>n || *iup<*ilp || *iup>n) return(1);
   }
 
-
   D = (double *) malloc( n*sizeof(double) );
   assert(D != NULL);
 
@@ -55,6 +66,8 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   Zsupp = (int *) malloc( 2*n*sizeof(int) );
   assert(Zsupp != NULL);
 
+  /* Scale matrix if necessary */
+  scale = dscale_matrix(range, uplo, np, A, ldap, vlp, vup, work);
 
   /* Reduction to tridiagonal */
   dsytrd_(uplo, np, A, ldap, D, E, TAU, work, &szwrk, &info);
@@ -70,6 +83,11 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
 	  &szwrk, &info);
   assert(info == 0);
 
+  /* Scaling of eigenvalues if necessary */
+  if (scale != 1.0) { /* FP cmp okay */
+    invscale = 1.0/scale;
+    dscal_(mp, &invscale, W, &ione);
+  }
 
   free(D);
   free(E);
@@ -80,6 +98,55 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   return(0);
 }
 
+
+
+static 
+double dscale_matrix(char *range, char *uplo, int *np, double *A, 
+		     int *ldap, double *vlp, double *vup, double *work)
+{
+  double sigma = 1.0;
+  double smlnum, bignum, rmin, rmax;
+  double norm;
+  bool   scaled = false;
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   lower  = (uplo[0] == 'L' || uplo[0] == 'l');
+  int    n      = *np;
+  int    lda    = *ldap;
+  int    i, ione=1, itmp;
+
+  smlnum = DBL_MIN / DBL_EPSILON;
+  bignum = 1.0 / smlnum;
+  rmin   = sqrt(smlnum);
+  rmax   = fmin(sqrt(bignum), 1.0 / sqrt(sqrt(DBL_MIN)));
+
+  norm = dlansy_("M", uplo, np, A, ldap, work);
+  if (norm > 0.0 && norm < rmin) {
+    scaled = true;
+    sigma  = rmin / norm;
+  } else if (norm > rmax) {
+    scaled = true;
+    sigma  = rmax / norm;
+  }
+  if (scaled) {
+    if (lower) {
+      for (i=0; i<n; i++) {
+	itmp = n - i;
+	dscal_(&itmp, &sigma, &A[i + i*lda], &ione);
+      }
+    } else {
+      for (i=0; i<n; i++) {
+	itmp = i + 1;
+	dscal_(&itmp, &sigma, &A[i*lda], &ione);
+      }
+    }
+    if (valeig) {
+      *vlp *= sigma;
+      *vup *= sigma;
+    }
+  }
+  
+  return(sigma);
+}
 
 
 
@@ -101,7 +168,10 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   long int       tmp, mm;
   long int       i, j;
   int            m, info;
-
+  double         scale = 1.0;
+  double         invscale;
+  int            ione=1;
+  
   bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
   bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
   bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
@@ -118,7 +188,6 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
     if (*ilp<1 || *ilp>n || *iup<*ilp || *iup>n) return(1);
   }
 
-
   D = (double *) malloc(n*sizeof(double));
   assert(D != NULL);
 
@@ -134,6 +203,8 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   Zsupp = (int *) malloc(2*n*sizeof(int));
   assert(Zsupp != NULL);
 
+  /* Scale matrix if necessary */
+  scale = zscale_matrix(range, uplo, np, A, ldap, vlp, vup, work);
 
   /* Reduction to tridiagonal */
   zhetrd_(uplo, np, A, ldap, D, E, TAU, work, &szwrk, &info);
@@ -168,6 +239,11 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
 	  work, &szwrk, &info);
   assert(info == 0);
 
+  /* Scaling of eigenvalues if necessary */
+  if (scale != 1.0) { /* FP cmp okay */
+    invscale = 1.0/scale;
+    dscal_(mp, &invscale, W, &ione);
+  }
 
   free(D);
   free(E);
@@ -176,6 +252,57 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   free(Zsupp);
 
   return(0);
+}
+
+
+
+static 
+double zscale_matrix(char *range, char *uplo, int *np, 
+		     double complex *A, int *ldap, double *vlp, 
+		     double *vup, double complex *work)
+{
+  double sigma = 1.0;
+  double smlnum, bignum, rmin, rmax;
+  double norm;
+  bool   scaled = false;
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   lower  = (uplo[0] == 'L' || uplo[0] == 'l');
+  int    n      = *np;
+  int    lda    = *ldap;
+  int    i, ione=1, itmp;
+
+  smlnum = DBL_MIN / DBL_EPSILON;
+  bignum = 1.0 / smlnum;
+  rmin   = sqrt(smlnum);
+  rmax   = fmin(sqrt(bignum), 1.0 / sqrt(sqrt(DBL_MIN)));
+
+  norm = zlanhe_("M", uplo, np, A, ldap, work);
+  if (norm > 0.0 && norm < rmin) {
+    scaled = true;
+    sigma  = rmin / norm;
+  } else if (norm > rmax) {
+    scaled = true;
+    sigma  = rmax / norm;
+  }
+  if (scaled) {
+    if (lower) {
+      for (i=0; i<n; i++) {
+	itmp = n - i;
+	zdscal_(&itmp, &sigma, &A[i + i*lda], &ione);
+      }
+    } else {
+      for (i=0; i<n; i++) {
+	itmp = i + 1;
+	zdscal_(&itmp, &sigma, &A[i*lda], &ione);
+      }
+    }
+    if (valeig) {
+      *vlp *= sigma;
+      *vup *= sigma;
+    }
+  }
+  
+  return(sigma);
 }
 #endif
 
