@@ -269,6 +269,7 @@ extern void dsytrd_(char*, int*, double*, int*, double*, double*,
 		    double*, double*, int*, int*);
 extern void dormtr_(char*, char*, char*, int*, int*, double*, int*, 
 		    double*, double*, int*, double*, int*, int*);
+extern double dlansy_(char*, char*, int*, double*, int*, double*);
 
 #ifdef COMPLEX_SUPPORTED
 #include <complex.h>
@@ -278,6 +279,9 @@ extern void zhetrd_(char*, int*, double complex*, int*, double*,
 extern void zunmtr_(char*, char*, char*, int*, int*, double complex*, 
 		    int*, double complex*, double complex*, int*, 
 		    double complex*, int*, int*);
+extern double zlanhe_(char*, char*, int*, double complex*, int*, 
+		      double complex*);
+extern void zdscal_(int*, double*, double complex*, int*);
 #endif
 
 

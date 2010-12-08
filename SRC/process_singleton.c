@@ -326,7 +326,7 @@ int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left,
 
 /* non-optimized, non-threaded DSCAL replacement */
 static inline 
-void mrrr_dscal(int *n, double *alpha, double restrict *x, int *incx)
+void mrrr_dscal(int *n, double *alpha, double *restrict x, int *incx)
 {
   int i;
   int stride = *incx;

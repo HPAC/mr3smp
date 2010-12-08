@@ -1,7 +1,6 @@
 include ./make.inc
 
-DIRS = ./INCLUDE ./SRC ./SRC/LAPACK ./SRC/LAPACK/SEQUENTIAL \
-       ./SRC/BLAS
+DIRS = ./INCLUDE ./SRC ./SRC/LAPACK ./SRC/BLAS
 
 CFLAGS += -I./INCLUDE
 
