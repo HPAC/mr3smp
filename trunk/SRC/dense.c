@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <string.h>
 #include <assert.h>
 #ifdef COMPLEX_SUPPORTED
 #include <complex.h>
@@ -11,11 +12,54 @@
 #include "global.h"
 #include "mrrr.h"  
 
+/* LAPACK routines for functions of the symmetric and the Hermitian 
+ * eigenproblem */ 
+extern void dsytrd_(char*, int*, double*, int*, double*, double*, 
+		    double*, double*, int*, int*);
+extern void dormtr_(char*, char*, char*, int*, int*, double*, int*, 
+		    double*, double*, int*, double*, int*, int*);
+extern double dlansy_(char*, char*, int*, double*, int*, double*);
+#ifdef COMPLEX_SUPPORTED
+extern void zhetrd_(char*, int*, double complex*, int*, double*, 
+		    double*, double complex*, double complex*, int*, 
+		    int*);
+extern void zunmtr_(char*, char*, char*, int*, int*, double complex*, 
+		    int*, double complex*, double complex*, int*, 
+		    double complex*, int*, int*);
+extern double zlanhe_(char*, char*, int*, double complex*, int*, 
+		      double complex*);
+extern void zdscal_(int*, double*, double complex*, int*);
+#endif
 
+/* LAPACK routines for functions of the generalized symmetric-definite 
+ * and the Hermitian-definite eigenproblem */ 
+extern void dpotrf_(char*, int*, double*, int*, int*);
+extern void dsygst_(int*, char*, int*, double*, int*, double*, 
+		    int*, int*);
+extern void dtrsm_(char*, char*, char*, char*, int*, int*, double*, 
+		   double*, int*, double*, int*);
+extern void dtrmm_(char*, char*, char*, char*, int*, int*, double*, 
+		   double*, int*, double*, int*);
+#ifdef COMPLEX_SUPPORTED
+extern void zpotrf_(char*, int*, double complex*, int*, int*);
+extern void zhegst_(int*, char*, int*, double complex*, int*, 
+		    double complex*, int*, int*);
+extern void ztrsm_(char*, char*, char*, char*, int*, int*, 
+		   double complex*, double complex*, int*, 
+		   double complex*, int*);
+extern void ztrmm_(char*, char*, char*, char*, int*, int*, 
+		   double complex*, double complex*, int*,
+		   double complex*, int*);
+#endif
+
+/* Other prototypes */
 static double dscale_matrix(char*, char*, int*, double*, int*, 
 			    double*, double*, double*);
+#ifdef COMPLEX_SUPPORTED
 static double zscale_matrix(char*, char*, int*, double complex*, int*,
 			    double*, double*, double complex*);
+#endif
+
 
 
 /* Routine for the dense symmetric eigenproblem */
@@ -94,6 +138,89 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   free(TAU);
   free(work);
   free(Zsupp);
+
+  return(0);
+}
+
+
+
+
+/* Routine for the dense generalized symmetric-definite eigenproblem */
+int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double *A, int *ldap, double *B, int *ldbp, double *vlp, 
+	    double *vup, int *ilp, int *iup, int *mp, double *W)
+{
+  int    info, itmp, j;
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   upper  = (uplo[0]  == 'U' || uplo[0]  == 'u');
+  bool   lower  = (uplo[0]  == 'L' || uplo[0]  == 'l');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+  double one    = 1.0;
+  int    n      = *np;
+  int    lda    = *ldap;
+  char   *trans;
+  double *Z;
+
+  /* Check input */
+  if (n <= 1) return(1);
+  if (*itype < 1 || *itype > 3) return(1);
+  if (!lower  && !upper) return(1);
+  if (!alleig && !valeig && !indeig) return(1);
+  if (!onlyW  && !wantZ  && !cntval) return(1);
+
+  if (indeig) itmp = *iup-*ilp+1;
+  else        itmp = n;
+  Z = (double *) malloc((size_t) itmp*n*sizeof(double));
+  assert(Z != NULL);
+
+  /* Form the Cholesky factor of B */
+  dpotrf_(uplo, np, B, ldbp, &info);
+  assert(info == 0);
+
+  /* Convert problem to standard eigenvalue problem */
+  dsygst_(itype, uplo, np, A, ldap, B, ldbp, &info);
+  assert(info == 0);
+
+  /* Solve standard eigenvalue problem using MRRR */
+  info = dsyeig(jobz, range, uplo, np, A, ldap, vlp, vup, 
+		ilp, iup, mp, W, Z, np);
+  assert(info == 0);
+
+  /* Backtransform eigenvectors */
+  if (wantZ) {
+
+    if (*itype ==  1 || *itype == 2) {
+      /* A*x = lambda*B*x or A*B*x = lambda*x requires 
+       * x = inv(L)'*y or x = inv(U)*y */
+
+      if (upper) trans = "N";
+      else       trans = "T";
+
+      dtrsm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
+	     B, ldbp, Z, ldap);
+    } else if (*itype == 3) {
+      /* B*A*x = lambda*x requires x = L*y or U'*y */
+      
+      if (upper) trans = "T";
+      else       trans = "N";
+
+      dtrmm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
+	     B, ldbp, Z, ldap);
+    } else {
+      return(1);
+    }
+
+  } /* Backtransform eigenvectors */ 
+
+  /* Copy eigenvectors into A */
+  for (j=0; j<*mp; j++)
+    memcpy(&A[j*lda], &Z[j*n], n*sizeof(double));
+
+  free(Z);
 
   return(0);
 }
@@ -230,9 +357,9 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   assert(info == 0);
 
   /* Copy intermediate real eigenvectors to complex Z */ 
-  for (i=0; i<(*np); i++)
-    for (j=0; j<(*mp); j++)
-      Z[ i * (*ldzp) + j ] = Ztmp[ i * (*np) + j ] + 0.0 * I;
+  for (j=0; j<(*mp); j++)
+    for (i=0; i<(*np); i++)
+      Z[j * (*ldzp) + i] = Ztmp[j * (*np) + i] + 0.0 * I;
   
   /* Backtransformation Z = U*Z */
   zunmtr_("L", uplo, "N", np, mp, A, ldap, TAU, Z, ldzp, 
@@ -250,6 +377,89 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   free(TAU);
   free(work);
   free(Zsupp);
+
+  return(0);
+}
+
+
+
+/* Routine for the dense generalized Hermitian-definite eigenproblem */
+int zhegeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double complex *A, int *ldap, double complex *B, int *ldbp, 
+	    double *vlp, double *vup, int *ilp, int *iup, int *mp, 
+	    double *W)
+{
+  int    info, itmp, j;
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   upper  = (uplo[0]  == 'U' || uplo[0]  == 'u');
+  bool   lower  = (uplo[0]  == 'L' || uplo[0]  == 'l');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+  int    n      = *np;
+  int    lda    = *ldap;
+  char   *trans;
+  double complex *Z;
+  double complex one = 1.0 + 0.0*I;
+
+  /* Check input */
+  if (n <= 1) return(1);
+  if (*itype < 1 || *itype > 3) return(1);
+  if (!lower  && !upper) return(1);
+  if (!alleig && !valeig && !indeig) return(1);
+  if (!onlyW  && !wantZ  && !cntval) return(1);
+
+  if (indeig) itmp = *iup-*ilp+1;
+  else        itmp = n;
+  Z = (double complex*) malloc((size_t) itmp*n*sizeof(double complex));
+  assert(Z != NULL);
+
+  /* Form the Cholesky factor of B */
+  zpotrf_(uplo, np, B, ldbp, &info);
+  assert(info == 0);
+
+  /* Convert problem to standard eigenvalue problem */
+  zhegst_(itype, uplo, np, A, ldap, B, ldbp, &info);
+  assert(info == 0);
+
+  /* Solve standard eigenvalue problem using MRRR */
+  info = zheeig(jobz, range, uplo, np, A, ldap, vlp, vup, 
+		ilp, iup, mp, W, Z, np);
+  assert(info == 0);
+
+  /* Backtransform eigenvectors */
+  if (wantZ) {
+
+    if (*itype ==  1 || *itype == 2) {
+      /* A*x = lambda*B*x or A*B*x = lambda*x require 
+       * x = inv(L)'*y or x = inv(U)*y */
+
+      if (upper) trans = "N";
+      else       trans = "C";
+
+      ztrsm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
+	     B, ldbp, Z, np);
+    } else if (*itype == 3) {
+      /* B*A*x = lambda*x requires x = L*y or U'*y */
+      
+      if (upper) trans = "C";
+      else       trans = "N";
+
+      ztrmm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
+	     B, ldbp, Z, np);
+    } else {
+      return(1);
+    }
+
+  } /* Backtransform eigenvectors */ 
+
+  /* Copy eigenvectors into A */
+  for (j=0; j<*mp; j++)
+    memcpy(&A[j*lda], &Z[j*n], n*sizeof(double complex));
+
+  free(Z);
 
   return(0);
 }
@@ -318,6 +528,15 @@ void dsyeig_(char *jobz, char *range, char *uplo, int *n, double *A,
 }
 
 
+void dsygeig_(int *itype, char *jobz, char *range, char *uplo, 
+	      int *np, double *A, int *ldap, double *B, int *ldbp, 
+	      double *vlp, double *vup, int *ilp, int *iup, int *mp, 
+	      double *W, int *info)
+{
+  *info = dsygeig(itype, jobz, range, uplo, np, A, ldap, B, ldbp, 
+		  vlp, vup, ilp, iup, mp, W);
+}
+
 
 #ifdef COMPLEX_SUPPORTED
 void zheeig_(char *jobz, char *range, char *uplo, int *n, 
@@ -327,6 +546,16 @@ void zheeig_(char *jobz, char *range, char *uplo, int *n,
 {
   *info = zheeig(jobz, range, uplo, n, A, lda, vl, vu, il, iu, 
 		 m, W, Z, ldz);
+}
+
+
+void zhegeig_(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	      double complex *A, int *ldap, double complex *B, int *ldbp, 
+	      double *vlp, double *vup, int *ilp, int *iup, int *mp, 
+	      double *W, int *info)
+{
+  *info = zhegeig(itype, jobz, range, uplo, np, A, ldap, B, ldbp, 
+		  vlp, vup, ilp, iup, mp, W);
 }
 #endif
 

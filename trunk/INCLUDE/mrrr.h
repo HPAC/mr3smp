@@ -46,6 +46,9 @@
 #ifndef EEIGTRI_H
 #define EEIGTRI_H
 
+#ifdef COMPLEX_SUPPORTED
+#include <complex.h>
+#endif
 #include "global.h"
 
 /* Parallel computation of all or a subset of eigenvalues and 
@@ -258,36 +261,12 @@ extern void   dstemr_(char*, char*, int*, double*, double*, double*,
 		      int*, int*, int*, int*, double*, int*, int*, 
 		      int*, int*);
 
-/* BLAS function prototypes - renaming for preventing multithreaded
- * version to be called when linked to a BLAS implementation */
+/* BLAS function prototypes */
 extern void   dscal_(int*, double*, double*, int*);
 
 
-/* LAPACK routines for wrapper functions of the symmetric and the Hermitian 
- * eigenproblem */ 
-extern void dsytrd_(char*, int*, double*, int*, double*, double*, 
-		    double*, double*, int*, int*);
-extern void dormtr_(char*, char*, char*, int*, int*, double*, int*, 
-		    double*, double*, int*, double*, int*, int*);
-extern double dlansy_(char*, char*, int*, double*, int*, double*);
 
-#ifdef COMPLEX_SUPPORTED
-#include <complex.h>
-extern void zhetrd_(char*, int*, double complex*, int*, double*, 
-		    double*, double complex*, double complex*, int*, 
-		    int*);
-extern void zunmtr_(char*, char*, char*, int*, int*, double complex*, 
-		    int*, double complex*, double complex*, int*, 
-		    double complex*, int*, int*);
-extern double zlanhe_(char*, char*, int*, double complex*, int*, 
-		      double complex*);
-extern void zdscal_(int*, double*, double complex*, int*);
-#endif
-
-
-/* Wrapper routines for the symmetric and Hermitian eigenproblem
- * Function prototype for the symetric case: */
-
+/* Routine for the dense symmetric eigenproblem: */
 int dsyeig(char *jobz, char *range, char *uplo, int *n, double *A, 
 	   int *lda, double *vl, double *vu, int *il, int *iu, 
 	   int *m, double *W, double *Z, int *ldz);
@@ -366,16 +345,108 @@ int dsyeig(char *jobz, char *range, char *uplo, int *n, double *A,
  * DOUBLE PRECISION A(*,*), VL, VU, W(*), Z(*,*)
  *
  */
+
+
+
+/* Routine for the dense generalized symmetric-definite eigenproblem */
+int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *n,
+	    double *A, int *lda, double *B, int *ldb, double *vl,
+	    double *vu, int *il, int *iu, int *m, double *W);
+
+/* Arguments:
+ * ----------
+ *
+ * INPUTS:
+ * -------
+ * itype              1  - A*x = lambda*B*x
+ *                    2  - A*B*x = lambda*x
+ *                    3  - B*A*x = lambda*x
+ * jobz              "N" - compute only eigenvalues
+ *                   "V" - compute also eigenvectors
+ * range             "A" - all
+ *                   "V" - by interval: (VL,VU]
+ *                   "I" - by index:     IL-IU
+ * uplo              "L" - Upper triangle of A and B stored
+ *                   "U" - Lower triangle of A and B stored
+ * n                 Order of the matrix A and B
+ * lda               Leading dimension of matrix A;
+ *                   often equal to matrix size n
+ * ldb               Leading dimension of eigenvector matrix B;
+ *                   often equal to matrix size n
+ *
+ * INPUT + OUTPUT:
+ * ---------------
+ * A                 On entry symmetric input matrix, stored
+ * (double[lda*n])   in column major ordering. Depending on the
+ *                   value of 'uplo' only the upper or lower
+ *                   triangular part is referenced
+ *                   On output the array will contain the
+ *                   'm' computed eigenvectors
+ * B                 On entry symmetric positive definite input
+ * (double[ldb*n])   matrix, stored in column major ordering.
+ *                   Depending on the value of 'uplo' only the upper
+ *                   or lower triangular part is referenced
+ *                   On output overwritten
+ * vl                If range="V", lower bound of interval
+ *                   (vl,vu], on output refined
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues
+ * vu                If range="V", upper bound of interval
+ *                   (vl,vu], on output refined
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues
+ * il                If range="I", lower index (1-based indexing) of
+ *                   the subset 'il' to 'iu'
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are
+ *                   computed
+ * iu                If range="I", upper index (1-based indexing) of
+ *                   the subset 'il' to 'iu'
+ *                   If range="A" or "V" not referenced as input
+ *                   On output the eigenvalues with index il to iu are
+ *                   computed
+ *
+ * OUTPUT:
+ * -------
+ * m                 Number of eigenvalues and eigenvectors computed
+ * W (double[n])     Eigenvalues
+ *                   The first 'm' entries contain the eigenvalues
+ *
+ * NOTICE:           The routine will allocate work space of size
+ *                   double[n*n] for range="A" or "V" and double[m*n]
+ *                   for range="I"
+ *
+ *
+ * RETURN VALUE:
+ * -------------
+ *                 0 - Success
+ *                 1 - Wrong input parameter
+ *                 2 - Misc errors
+ *
+ * The Fortran interface takes an additinal integer argument INFO
+ * to retrieve the return value.
+ *
+ * CALL DSYGEIG(ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB,
+ *              VL, VU, IL, IU, M, W, INFO);
+ *
+ * CHARACTER        JOBZ, RANGE, UPLO
+ * INTEGER          N, IL, IU, M, LDA, LDB, INFO
+ * DOUBLE PRECISION A(*,*), B(*,*), VL, VU, W(*)
+ *
+ */
+
  
 
 
-/* Function prototype for the symetric case: */
+/* Function prototype for the Hermitian case: */
 
 #ifdef COMPLEX_SUPPORTED
-int zheeig(char *jobz, char *range, char *uplo, int *np, 
-	   double complex *A, int *ldap, double *vlp, double *vup, 
-	   int *ilp, int *iup, int *mp, double *W, double complex *Z, 
-	   int *ldzp);
+int zheeig(char *jobz, char *range, char *uplo, int *n, 
+	   double complex *A, int *lda, double *vl, double *vu,
+	   int *il, int *iu, int *m, double *W, double complex *Z,
+	   int *ldz);
 
 /* Arguments:
  * ----------
@@ -453,6 +524,100 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
  *
  */
 
+
+
+
+/* Function prototype for the Hermitian generalized case: */
+
+int zhegeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double complex *A, int *ldap, double complex *B, int *ldbp, 
+	    double *vlp, double *vup, int *ilp, int *iup, int *mp, 
+	    double *W);
+
+/* Arguments:
+ * ----------
+ *
+ * INPUTS:
+ * -------
+ * itype              1  - A*x = lambda*B*x
+ *                    2  - A*B*x = lambda*x
+ *                    3  - B*A*x = lambda*x
+ * jobz              "N" - compute only eigenvalues
+ *                   "V" - compute also eigenvectors
+ * range             "A" - all
+ *                   "V" - by interval: (VL,VU]
+ *                   "I" - by index:     IL-IU
+ * uplo              "L" - Upper triangle of A and B stored
+ *                   "U" - Lower triangle of A and B stored
+ * n                 Order of the matrix A and B
+ * lda               Leading dimension of matrix A;
+ *                   often equal to matrix size n
+ * ldb               Leading dimension of eigenvector matrix B;
+ *                   often equal to matrix size n
+ *
+ * INPUT + OUTPUT:
+ * ---------------
+ * A                 On entry symmetric input matrix, stored
+ * (double           in column major ordering. Depending on the
+ *  complex[lda*n])  value of 'uplo' only the upper or lower
+ *                   triangular part is referenced
+ *                   On output the array will contain the
+ *                   'm' computed eigenvectors
+ * B                 On entry symmetric positive definite input
+ * (double           matrix, stored in column major ordering.
+ *  complex[ldb*n])  Depending on the value of 'uplo' only the upper
+ *                   or lower triangular part is referenced
+ *                   On output overwritten
+ * vl                If range="V", lower bound of interval
+ *                   (vl,vu], on output refined
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues
+ * vu                If range="V", upper bound of interval
+ *                   (vl,vu], on output refined
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues
+ * il                If range="I", lower index (1-based indexing) of
+ *                   the subset 'il' to 'iu'
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are
+ *                   computed
+ * iu                If range="I", upper index (1-based indexing) of
+ *                   the subset 'il' to 'iu'
+ *                   If range="A" or "V" not referenced as input
+ *                   On output the eigenvalues with index il to iu are
+ *                   computed
+ *
+ * OUTPUT:
+ * -------
+ * m                 Number of eigenvalues and eigenvectors computed
+ * W (double[n])     Eigenvalues
+ *                   The first 'm' entries contain the eigenvalues
+ *
+ * NOTICE:           The routine will allocate work space of size
+ *                   double complex[n*n] for range="A" or "V" and 
+ *                   double complex[m*n] for range="I"
+ *
+ *
+ * RETURN VALUE:
+ * -------------
+ *                 0 - Success
+ *                 1 - Wrong input parameter
+ *                 2 - Misc errors
+ *
+ * The Fortran interface takes an additinal integer argument INFO
+ * to retrieve the return value.
+ *
+ * CALL ZHEGEIG(ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB,
+ *              VL, VU, IL, IU, M, W, INFO);
+ *
+ * CHARACTER        JOBZ, RANGE, UPLO
+ * INTEGER          N, IL, IU, M, LDA, LDB, INFO
+ * DOUBLE PRECISION VL, VU, W(*)
+ * COMPLEX*16       A(*,*), B(*,*)
+ *
+ */
 #endif
 
 #endif

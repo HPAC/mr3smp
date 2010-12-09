@@ -21,6 +21,14 @@ Building the archive libmrrr.a:
    them in the archive. (LAPACK 3.3 or equivalent is recommended.)
 3) Run make.
 
+Known issues:
+-------------
+- PROBLEM: Spinlocks are not supported
+  SOLUTION: Compile the library with SPINLOCK_SUPPORT=0 in 'make.inc'
+- PROBLEM: The C99 feature of complex numbers is not support
+  SOLUTION: Use a newer compiler or compile the library with
+  COMPLEX_SUPPORT=0 (default) in 'make.inc'. In the latter case the 
+  dense Hermitian routines will not be available in the archive
 
 Using libmrrr.a:
 ----------------
@@ -129,13 +137,21 @@ defined, then the routine will create as many threads as specified by
 the variable DEFAULT_NUM_THREADS (which is set in 'mrrr.h'). 
 
 
-For convinience there are also routines for the symmetric and 
-Hermitian eigenproblem added that make use of the multi-threaded MRRR. 
-Using LAPACK notation they are called DSYEIG and ZHEEIG. For the 
-reduction and back-transformation the routines call the corresponding 
-LAPACK routines. Therefore LAPACK is required to run the routines. 
-Simply code snippets of how to call the functions are included in the 
-examples folder.
+ADDITIONAL ROUTINES FOR DENSE STANDARD AND GENERALIZED EIGENPROBLEMS
+-------------------------------------------------------------------- 
+For convinience there are also routines for the standard and 
+generalized symmetric and Hermitian eigenproblem added that make use 
+of the multi-threaded MRRR. The functionality is similar to LAPACK's 
+routines for this operations.
+
+
+The dense standard eigenvalue problem:
+--------------------------------------
+Using LAPACK notation the routines are called DSYEIG and ZHEEIG. 
+For the reduction and back-transformation the routines call the 
+corresponding LAPACK routines. Therefore LAPACK is required to run 
+the routines. Simply code snippets of how to call the functions are 
+included in the examples folder.
 The prototypes are similar to LAPACK's "dsyevx" and are as follows.
 
 The symmetric case:
@@ -212,12 +228,13 @@ The symmetric case:
 #                 2 - Misc errors                                    #
 ######################################################################
 
+
 ######################################################################
 # Fortran prototype:                                                 #
 ######################################################################
 #                                                                    #
-# CALL DSYEIG(JOBZ, RANGE, UPLO, N, A, LDA, VL, VU, IL, IU,          #
-#             M, W, Z, LDZ, INFO)                                    #
+# DSYEIG(JOBZ, RANGE, UPLO, N, A, LDA, VL, VU, IL, IU, M, W,         #
+#        Z, LDZ, INFO)                                               #
 #                                                                    #
 # CHARACTER        JOBZ, RANGE, UPLO                                 #
 # INTEGER          N, IL, IU, M, LDA, LDZ, INFO                      #
@@ -302,12 +319,13 @@ The Hermitian case (only added to 'libmrrr.a' if specified in
 #                 2 - Misc errors                                    #
 ######################################################################
 
+
 ######################################################################
 # Fortran prototype:                                                 #
 ######################################################################
 #                                                                    #
-# CALL DSYEIG(JOBZ, RANGE, UPLO, N, A, LDA, VL, VU, IL, IU,          #
-#             M, W, Z, LDZ, INFO)                                    #
+# DSYEIG(JOBZ, RANGE, UPLO, N, A, LDA, VL, VU, IL, IU, M, W,         #
+#        Z, LDZ, INFO)                                               #
 #                                                                    #
 # CHARACTER        JOBZ, RANGE, UPLO                                 #
 # INTEGER          N, IL, IU, M, LDA, LDZ, INFO                      #
@@ -316,6 +334,215 @@ The Hermitian case (only added to 'libmrrr.a' if specified in
 #                                                                    #
 ######################################################################
 
+
+The dense generalized definite eigenvalue problem:
+--------------------------------------------------
+Using LAPACK notation the routines are called DSYGEIG and ZHEGEIG.
+Simply code snippets of how to call the functions are included in the 
+examples folder.
+The problems that can be solved have the following form:
+A*x = lambda*B*x or A*B*x = lambda*x or B*A*x = lambda*x,
+where A and B are symmetric/Hermitian and B is definite.
+
+Symmetric-definite case:
+
+######################################################################
+# C function prototype:                                              #
+###################################################################### 
+#                                                                    #
+# int dsygeig(int *itype, char *jobz, char *range, char *uplo,       #
+#             int *n, double *A, int *lda, double *B, int *ldb,      #
+#	      double *vl, double *vu, int *il, int *iu, int *m,      #
+#	      double *W);                                            #
+#                                                                    #
+# Arguments:                                                         #
+# ----------                                                         #
+#                                                                    #
+# INPUTS:                                                            #
+# -------                                                            #
+# itype              1  - A*x = lambda*B*x                           #
+#                    2  - A*B*x = lambda*x                           #
+#                    3  - B*A*x = lambda*x                           #
+# jobz              "N" - compute only eigenvalues                   #
+#                   "V" - compute also eigenvectors                  #
+# range             "A" - all                                        #
+#                   "V" - by interval: (VL,VU]                       #
+#                   "I" - by index:     IL-IU                        #
+# uplo              "L" - Upper triangle of A and B stored           #
+#                   "U" - Lower triangle of A and B stored           #
+# n                 Order of the matrix A and B                      #
+# lda               Leading dimension of matrix A;                   #
+#                   often equal to matrix size n                     #
+# ldb               Leading dimension of eigenvector matrix B;       #
+#                   often equal to matrix size n                     #
+#                                                                    #
+# INPUT + OUTPUT:                                                    #
+# ---------------                                                    #
+# A                 On entry symmetric input matrix, stored          #
+# (double[lda*n])   in column major ordering. Depending on the       #
+#                   value of 'uplo' only the upper or lower          #
+#                   triangular part is referenced                    #
+#                   On output the array will contain the             #
+#                   'm' computed eigenvectors                        #
+# B                 On entry symmetric positive definite input       #
+# (double[ldb*n])   matrix, stored in column major ordering.         #
+#                   Depending on the value of 'uplo' only the upper  #
+#                   or lower triangular part is referenced           #
+#                   On output overwritten                            #
+# vl                If range="V", lower bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input      #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# vu                If range="V", upper bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input.     #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# il                If range="I", lower index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input.     #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+# iu                If range="I", upper index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input      #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+#                                                                    #
+# OUTPUT:                                                            #
+# -------                                                            #
+# m                 Number of eigenvalues and eigenvectors computed  #
+# W (double[n])     Eigenvalues                                      #
+#                   The first 'm' entries contain the eigenvalues    #
+#                                                                    #
+# NOTICE:           The routine will allocate work space of size     #
+#                   double[n*n] for range="A" or "V" and double[m*n] #
+#                   for range="I"                                    #
+#                                                                    #
+# RETURN VALUE:                                                      #
+# -------------                                                      #
+#                 0 - Success                                        #
+#                 1 - Wrong input parameter                          #
+#                 2 - Misc errors                                    #
+#                                                                    #
+######################################################################
+
+
+######################################################################
+# Fortran prototype:                                                 #
+######################################################################
+#                                                                    #
+# DSYGEIG(ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB,               #
+#         VL, VU, IL, IU, M, W, INFO);                               #
+#                                                                    #
+# CHARACTER        JOBZ, RANGE, UPLO                                 #
+# INTEGER          N, IL, IU, M, LDA, LDB, INFO                      #
+# DOUBLE PRECISION A(*,*), B(*,*), VL, VU, W(*)                      #
+#                                                                    #
+######################################################################
+
+
+
+Hermitian-definite case:
+
+######################################################################
+# C function prototype:                                              #
+###################################################################### 
+#                                                                    #
+# int zhegeig(int *itype, char *jobz, char *range, char *uplo,       #
+#             int *n, double complex *A, int *lda,                   #
+#	      double complex *B, int *ldb, double *vl, double *vu,   #
+#	      int *il, int *iu, int *m, double *W);                  #
+#                                                                    #
+# Arguments:                                                         #
+# ----------                                                         #
+#                                                                    #
+# INPUTS:                                                            #
+# -------                                                            #
+# itype              1  - A*x = lambda*B*x                           #
+#                    2  - A*B*x = lambda*x                           #
+#                    3  - B*A*x = lambda*x                           #
+# jobz              "N" - compute only eigenvalues                   #
+#                   "V" - compute also eigenvectors                  #
+# range             "A" - all                                        #
+#                   "V" - by interval: (VL,VU]                       #
+#                   "I" - by index:     IL-IU                        #
+# uplo              "L" - Upper triangle of A and B stored           #
+#                   "U" - Lower triangle of A and B stored           #
+# n                 Order of the matrix A and B                      #
+# lda               Leading dimension of matrix A;                   #
+#                   often equal to matrix size n                     #
+# ldb               Leading dimension of eigenvector matrix B;       #
+#                   often equal to matrix size n                     #
+#                                                                    #
+# INPUT + OUTPUT:                                                    #
+# ---------------                                                    #
+# A                 On entry symmetric input matrix, stored          #
+# (double           in column major ordering. Depending on the       #
+#  complex[lda*n])  value of 'uplo' only the upper or lower          #
+#                   triangular part is referenced                    #
+#                   On output the array will contain the             #
+#                   'm' computed eigenvectors                        #
+# B                 On entry symmetric positive definite input       #
+# (double           matrix, stored in column major ordering.         #
+#  complex[ldb*n])  Depending on the value of 'uplo' only the upper  #
+#                   or lower triangular part is referenced           #
+#                   On output overwritten                            #
+# vl                If range="V", lower bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input      #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# vu                If range="V", upper bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input.     #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# il                If range="I", lower index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input.     #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+# iu                If range="I", upper index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input      #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+#                                                                    #
+# OUTPUT:                                                            #
+# -------                                                            #
+# m                 Number of eigenvalues and eigenvectors computed  #
+# W (double[n])     Eigenvalues                                      #
+#                   The first 'm' entries contain the eigenvalues    #
+#                                                                    #
+# NOTICE:           The routine will allocate work space of size     #
+#                   double[n*n] for range="A" or "V" and double[m*n] #
+#                   for range="I"                                    #
+#                                                                    #
+# RETURN VALUE:                                                      #
+# -------------                                                      #
+#                 0 - Success                                        #
+#                 1 - Wrong input parameter                          #
+#                 2 - Misc errors                                    #
+#                                                                    #
+######################################################################
+
+
+######################################################################
+# Fortran prototype:                                                 #
+######################################################################
+#                                                                    #
+# ZHEGEIG(ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB,               #
+#         VL, VU, IL, IU, M, W, INFO);                               #
+#                                                                    #
+# CHARACTER        JOBZ, RANGE, UPLO                                 #
+# INTEGER          N, IL, IU, M, LDA, LDB, INFO                      #
+# DOUBLE PRECISION VL, VU, W(*)                                      #
+# COMPLEX*16       A(*,*), B(*,*)                                    #
+#                                                                    #
+######################################################################
+ 
 
 
 COMMENTS AND BUGS:
