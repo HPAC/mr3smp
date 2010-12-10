@@ -67,6 +67,23 @@ extern void zupmtr_(char*,char*,char*,int*,int*,double complex*,
 extern double zlanhp_(char*,char*,int*,double complex*,double*);
 #endif
 
+/* LAPACK routines for functions of the generalized symmetric-definite 
+ * and the Hermitian-definite eigenproblem in packed storage */
+extern void dpptrf_(char*,int*,double*,int*);
+extern void dspgst_(int*,char*,int*,double*,double*,int*);
+extern void dtpsv_(char*,char*,char*,int*,double*,double*,int*);
+extern void dtpmv_(char*,char*,char*,int*,double*,double*,int*); 
+#ifdef COMPLEX_SUPPORTED
+extern void zpptrf_(char*,int*,double complex*,int*);
+extern void zhpgst_(int*,char*,int*,double complex*,
+		    double complex*,int*);
+extern void ztpsv_(char*,char*,char*,int*,double complex*,
+		   double complex*,int*);
+extern void ztpmv_(char*,char*,char*,int*,double complex*,
+		   double complex*,int*);
+#endif
+
+
 /* Other prototypes */
 static double dscale_matrix(char*, char*, int*, double*, int*, 
 			    double*, double*, double*);
@@ -223,7 +240,7 @@ int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *np,
       else       trans = "T";
 
       dtrsm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
-	     B, ldbp, Z, ldap);
+	     B, ldbp, Z, np);
     } else if (*itype == 3) {
       /* B*A*x = lambda*x requires x = L*y or U'*y */
       
@@ -231,7 +248,7 @@ int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *np,
       else       trans = "N";
 
       dtrmm_("Left", uplo, trans, "Non-unit", np, mp, &one, 
-	     B, ldbp, Z, ldap);
+	     B, ldbp, Z, np);
     } else {
       return(1);
     }
@@ -327,6 +344,80 @@ int dspeig(char *jobz, char *range, char *uplo, int *np, double *AP,
   free(work);
   free(Zsupp);
   
+  return(0);
+}
+
+
+
+
+/* Routine for the dense generalized symmetric-definite eigenproblem 
+ * using packed storage */
+int dspgeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double *AP, double *BP, double *vlp, double *vup, 
+	    int *ilp, int *iup, int *mp, double *W, double *Z, 
+	    int *ldzp)
+{
+  int    n      = *np;
+  int    ldz    = *ldzp;
+  int    info, j, ione=1;
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   upper  = (uplo[0]  == 'U' || uplo[0]  == 'u');
+  bool   lower  = (uplo[0]  == 'L' || uplo[0]  == 'l');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+  char   *trans;
+
+  /* Check input */
+  if (n < 1) return(1);
+  if (*itype < 1 || *itype > 3) return(1);
+  if (!lower  && !upper) return(1);
+  if (!alleig && !valeig && !indeig) return(1);
+  if (!onlyW  && !wantZ  && !cntval) return(1);
+
+  /* Form the Cholesky factor of B */
+  dpptrf_(uplo, np, BP, &info);
+  assert(info == 0);
+
+  /* Convert problem to standard eigenvalue problem */
+  dspgst_(itype, uplo, np, AP, BP, &info);
+  assert(info == 0);
+
+  /* Solve standard eigenvalue problem using MRRR */
+  info = dspeig(jobz, range, uplo, np, AP, vlp, vup, 
+  		ilp, iup, mp, W, Z, ldzp);
+  assert(info == 0);
+
+  /* Backtransform eigenvectors */
+  if (wantZ) {
+
+    if (*itype ==  1 || *itype == 2) {
+      /* A*x = lambda*B*x or A*B*x = lambda*x requires 
+       * x = inv(L)'*y or x = inv(U)*y */
+
+      if (upper) trans = "N";
+      else       trans = "T";
+
+      for (j=0; j<*mp; j++)
+	dtpsv_(uplo, trans, "Non-unit", np, BP, &Z[j*ldz], &ione);
+
+    } else if (*itype == 3) {
+      /* B*A*x = lambda*x requires x = L*y or U'*y */
+  
+      if (upper) trans = "T";
+      else       trans = "N";
+
+      for (j=0; j<*mp; j++)
+	dtpmv_(uplo, trans, "Non-unit", np, BP, &Z[j*ldz], &ione);
+
+    } else {
+      return(1);
+    }
+  
+  } /* Backtransform eigenvectors */ 
+
   return(0);
 }
 
@@ -724,6 +815,80 @@ int zhpeig(char *jobz, char *range, char *uplo, int *np,
 
 
 
+
+/* Routine for the dense generalized Hermitian-definite eigenproblem 
+ * in packed storage */
+int zhpgeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double complex *AP, double complex *BP, double *vlp, 
+	    double *vup, int *ilp, int *iup, int *mp, double *W, 
+	    double complex *Z, int *ldzp)
+{
+  int    n      = *np;
+  int    ldz    = *ldzp;
+  int    info, j, ione=1;
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   upper  = (uplo[0]  == 'U' || uplo[0]  == 'u');
+  bool   lower  = (uplo[0]  == 'L' || uplo[0]  == 'l');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+  char   *trans;
+
+  /* Check input */
+  if (n <= 1) return(1);
+  if (*itype < 1 || *itype > 3) return(1);
+  if (!lower  && !upper) return(1);
+  if (!alleig && !valeig && !indeig) return(1);
+  if (!onlyW  && !wantZ  && !cntval) return(1);
+
+  /* Form the Cholesky factor of B */
+  zpptrf_(uplo, np, BP, &info);
+  assert(info == 0);
+
+  /* Convert problem to standard eigenvalue problem */
+  zhpgst_(itype, uplo, np, AP, BP, &info);
+  assert(info == 0);
+
+  /* Solve standard eigenvalue problem using MRRR */
+  info = zhpeig(jobz, range, uplo, np, AP, vlp, vup, 
+  		ilp, iup, mp, W, Z, ldzp);
+  assert(info == 0);
+
+  /* Backtransform eigenvectors */
+  if (wantZ) {
+
+    if (*itype ==  1 || *itype == 2) {
+      /* A*x = lambda*B*x or A*B*x = lambda*x require 
+       * x = inv(L)'*y or x = inv(U)*y */
+
+      if (upper) trans = "N";
+      else       trans = "C";
+
+      for (j=0; j<*mp; j++)
+        ztpsv_(uplo, trans, "Non-unit", np, BP, &Z[j*ldz], &ione); 
+
+    } else if (*itype == 3) {
+      /* B*A*x = lambda*x requires x = L*y or U'*y */
+      
+      if (upper) trans = "C";
+      else       trans = "N";
+
+      for (j=0; j<*mp; j++)
+        ztpmv_(uplo, trans, "Non-unit", np, BP, &Z[j*ldz], &ione);
+      
+    } else {
+      return(1);
+    }
+
+  } /* Backtransform eigenvectors */ 
+
+  return(0);
+}
+
+
+
 static 
 double zscale_matrix(char *range, char *uplo, int *np, 
 		     double complex *A, int *ldap, double *vlp, 
@@ -849,6 +1014,16 @@ void dspeig_(char *jobz, char *range, char *uplo, int *np, double *AP,
 }
 
 
+void dspgeig_(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	      double *AP, double *BP, double *vlp, double *vup, 
+	      int *ilp, int *iup, int *mp, double *W, double *Z, 
+	      int *ldzp, int *info)
+{
+  *info =  dspgeig(itype, jobz, range, uplo, np, AP, BP, vlp, vup, 
+		   ilp, iup, mp, W, Z, ldzp);
+}
+
+
 #ifdef COMPLEX_SUPPORTED
 void zheeig_(char *jobz, char *range, char *uplo, int *n, 
 	     double complex *A, int *lda, double *vl, double *vu, 
@@ -877,6 +1052,16 @@ void zhpeig_(char *jobz, char *range, char *uplo, int *np,
 {
   *info =  zhpeig(jobz, range, uplo, np, AP, vlp, vup, 
 		  ilp, iup, mp, W, Z, ldzp);
+}
+
+
+void zhpgeig_(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	      double complex *AP, double complex *BP, double *vlp, 
+	      double *vup, int *ilp, int *iup, int *mp, double *W, 
+	      double complex *Z, int *ldzp, int *info)
+{
+  *info =  zhpgeig(itype, jobz, range, uplo, np, AP, BP, vlp, 
+		   vup, ilp, iup, mp, W, Z, ldzp);
 }
 #endif
 

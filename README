@@ -165,6 +165,10 @@ eigenvectors
 ----------------------------------------------------------------------
 dsygeig: A and B are symmetric and B is definite
 zhegeig: A and B are Hermitian and B is definite
+dspgeig: A and B are symmetric, stored in packed storage, 
+         and B is definite
+zhpgeig: A and B are Hermitian, stored in packed storage,
+         and B is definite
 ----------------------------------------------------------------------
 
 
@@ -299,7 +303,7 @@ The symmetric case (packed storage):
 # AP (double[s])    On entry symmetric input matrix, stored          #
 # s = (n*(n+1))/2   in column major ordering. Depending on the       #
 #                   value of 'uplo' only the upper or lower          #
-#                   triangular part is referenced.                   #
+#                   triangular part is stored.                       #
 #                   (On output the array will be overwritten).       #
 # vl                If range="V", lower bound of interval            #
 #                   (vl,vu], on output refined.                      #
@@ -483,7 +487,7 @@ The Hermitian case (packed storage; only added to if specified in
 # AP (double        On entry Hermitian input matrix, stored          #
 #     complex[s])   in packed storage by columns. Depending on the   #
 # s = (n*(n+1))/2   value of 'uplo' only the upper or lower          #
-#                   triangular part is referenced.                   #
+#                   triangular part is stored.                       #
 #                   (On output the array will be overwritten).       #
 # vl                If range="V", lower bound of interval            #
 #                   (vl,vu], on output refined.                      #
@@ -592,8 +596,8 @@ Symmetric-definite case:
 #                   triangular part is referenced                    #
 #                   On output the array will contain the             #
 #                   'm' computed eigenvectors                        #
-# B                 On entry symmetric positive definite input       #
-# (double[ldb*n])   matrix, stored in column major ordering.         #
+# B                 On entry symmetric definite input matrix,        #
+# (double[ldb*n])   stored in column major ordering.                 #
 #                   Depending on the value of 'uplo' only the upper  #
 #                   or lower triangular part is referenced           #
 #                   On output overwritten                            #
@@ -652,6 +656,109 @@ Symmetric-definite case:
 
 
 
+Symmetric-definite case (packed storage):
+
+######################################################################
+# C function prototype:                                              #
+###################################################################### 
+#                                                                    #
+# int dspgeig(int *itype, char *jobz, char *range, char *uplo,       #
+#             int *n, double *AP, double *BP, double *vl,            #
+#             double *vu, int *il, int *iu, int *m, double *W,       #
+#             double *Z, int *ldz);                                  #
+#                                                                    #
+# Arguments:                                                         #
+# ----------                                                         #
+#                                                                    #
+# INPUTS:                                                            #
+# -------                                                            #
+# itype              1  - A*x = lambda*B*x                           #
+#                    2  - A*B*x = lambda*x                           #
+#                    3  - B*A*x = lambda*x                           #
+# jobz              "N" - compute only eigenvalues                   #
+#                   "V" - compute also eigenvectors                  #
+# range             "A" - all                                        #
+#                   "V" - by interval: (VL,VU]                       #
+#                   "I" - by index:     IL-IU                        #
+# uplo              "L" - Upper triangle of A and B stored           #
+#                   "U" - Lower triangle of A and B stored           #
+# n                 Order of the matrix A and B                      #
+# ldz               Leading dimension of matrix Z;                   #
+#                   often equal to matrix size n                     #
+#                                                                    #
+# INPUT + OUTPUT:                                                    #
+# ---------------                                                    #
+# AP                On entry symmetric input matrix, stored in       #
+# (double[s])       packed format by columns. Depending on the       #
+# s = (n*(n+1))/2   value of 'uplo' only the upper or lower          #
+#                   triangular part is stored                        #
+#                   On output the array will contain the             #
+#                   'm' computed eigenvectors                        #
+# BP                On entry symmetric definite input matrix, stored #
+# (double[s])       in packed format by columns.                     #
+# s = (n*(n+1))/2   Depending on the value of 'uplo' only the upper  #
+#                   or lower triangular part is stored               #
+#                   On output overwritten                            #
+# vl                If range="V", lower bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input      #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# vu                If range="V", upper bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input.     #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# il                If range="I", lower index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input.     #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+# iu                If range="I", upper index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input      #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+#                                                                    #
+# OUTPUT:                                                            #
+# -------                                                            #
+# m                 Number of eigenvalues and eigenvectors computed  #
+# W (double[n])     Eigenvalues                                      #
+#                   The first 'm' entries contain the eigenvalues    #
+# Z (double[m*n])   Eigenvectors                                     #
+#                   Enough space must be provided to store the       #
+#                   vectors. 'm' should be bigger or equal           #
+#                   to 'n' for range="A" or "V" and 'iu-il+1' for    #
+#                   range="I".                                       #
+#                                                                    #
+# NOTICE:           The routine will allocate work space of size     #
+#                   double[n*n] for range="A" or "V" and double[m*n] #
+#                   for range="I"                                    #
+#                                                                    #
+# RETURN VALUE:                                                      #
+# -------------                                                      #
+#                 0 - Success                                        #
+#                 1 - Wrong input parameter                          #
+#                 2 - Misc errors                                    #
+#                                                                    #
+######################################################################
+
+
+######################################################################
+# Fortran prototype:                                                 #
+######################################################################
+#                                                                    #
+# DSPGEIG(ITYPE, JOBZ, RANGE, UPLO, N, AP, BP,                       #
+#         VL, VU, IL, IU, M, W, Z, LDZ, INFO)                        #
+#                                                                    #
+# CHARACTER        JOBZ, RANGE, UPLO                                 #
+# INTEGER          N, IL, IU, M, LDZ, INFO                           #
+# DOUBLE PRECISION AP(*), BP(*), VL, VU, W(*), Z(*,*)                #
+#                                                                    #
+######################################################################
+
+
+
 Hermitian-definite case:
 
 ######################################################################
@@ -692,8 +799,8 @@ Hermitian-definite case:
 #                   triangular part is referenced                    #
 #                   On output the array will contain the             #
 #                   'm' computed eigenvectors                        #
-# B                 On entry symmetric positive definite input       #
-# (double           matrix, stored in column major ordering.         #
+# B                 On entry symmetric definite input matrix,        #
+# (double           stored in column major ordering.                 #
 #  complex[ldb*n])  Depending on the value of 'uplo' only the upper  #
 #                   or lower triangular part is referenced           #
 #                   On output overwritten                            #
@@ -751,6 +858,110 @@ Hermitian-definite case:
 #                                                                    #
 ######################################################################
  
+
+
+Hermitian-definite case (packed storage):
+
+######################################################################
+# C function prototype:                                              #
+###################################################################### 
+#                                                                    #
+# int zhpgeig(int *itype, char *jobz, char *range, char *uplo,       #
+#             int *n, double complex *AP, double complex *BP,        #
+#	      double *vl, double *vu, int *il, int *iu, int *m,      #
+#	      double *W, double complex *Z, int *ldz);               #
+#                                                                    #
+# Arguments:                                                         #
+# ----------                                                         #
+#                                                                    #
+# INPUTS:                                                            #
+# -------                                                            #
+# itype              1  - A*x = lambda*B*x                           #
+#                    2  - A*B*x = lambda*x                           #
+#                    3  - B*A*x = lambda*x                           #
+# jobz              "N" - compute only eigenvalues                   #
+#                   "V" - compute also eigenvectors                  #
+# range             "A" - all                                        #
+#                   "V" - by interval: (VL,VU]                       #
+#                   "I" - by index:     IL-IU                        #
+# uplo              "L" - Upper triangle of A and B stored           #
+#                   "U" - Lower triangle of A and B stored           #
+# n                 Order of the matrix A and B                      #
+# ldz               Leading dimension of matrix Z;                   #
+#                   often equal to matrix size n                     #
+#                                                                    #
+# INPUT + OUTPUT:                                                    #
+# ---------------                                                    #
+# AP                On entry Hermitian input matrix, stored in       #
+# (double           packed format by columns. Depending on the       #
+#  complex[s])      value of 'uplo' only the upper or lower          #
+# s = (n*(n+1))/2   triangular part is stored                        #
+#                   On output the array will contain the             #
+#                   'm' computed eigenvectors                        #
+# BP                On entry Hermitian definite input matrix, stored #
+# (double           in packed format by columns.                     #
+#  complex[s])      Depending on the value of 'uplo' only the upper  #
+# s = (n*(n+1))/2   or lower triangular part is stored               #
+#                   On output overwritten                            #
+# vl                If range="V", lower bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input      #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# vu                If range="V", upper bound of interval            #
+#                   (vl,vu], on output refined                       #
+#                   If range="A" or "I" not referenced as input.     #
+#                   On output the interval (vl,vu] contains ALL      #
+#                   the computed eigenvalues                         #
+# il                If range="I", lower index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input.     #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+# iu                If range="I", upper index (1-based indexing) of  #
+#                   the subset 'il' to 'iu'                          #
+#                   If range="A" or "V" not referenced as input      #
+#                   On output the eigenvalues with index il to iu    #
+#                   are computed                                     #
+#                                                                    #
+# OUTPUT:                                                            #
+# -------                                                            #
+# m                 Number of eigenvalues and eigenvectors computed  #
+# W (double[n])     Eigenvalues                                      #
+#                   The first 'm' entries contain the eigenvalues    #
+# Z (double         Eigenvectors                                     #
+#    complex[m*n])  Enough space must be provided to store the       #
+#                   vectors. 'm' should be bigger or equal           #
+#                   to 'n' for range="A" or "V" and 'iu-il+1' for    #
+#                   range="I".                                       #
+#                                                                    #
+# NOTICE:           The routine will allocate work space of size     #
+#                   double[n*n] for range="A" or "V" and double[m*n] #
+#                   for range="I"                                    #
+#                                                                    #
+# RETURN VALUE:                                                      #
+# -------------                                                      #
+#                 0 - Success                                        #
+#                 1 - Wrong input parameter                          #
+#                 2 - Misc errors                                    #
+#                                                                    #
+######################################################################
+
+
+######################################################################
+# Fortran prototype:                                                 #
+######################################################################
+#                                                                    #
+# ZHPGEIG(ITYPE, JOBZ, RANGE, UPLO, N, AP, BP,                       #
+#         VL, VU, IL, IU, M, W, Z, LDZ, INFO)                        #
+#                                                                    #
+# CHARACTER        JOBZ, RANGE, UPLO                                 #
+# INTEGER          N, IL, IU, M, LDZ, INFO                           #
+# DOUBLE PRECISION VL, VU, W(*)                                      #
+# COMPLEX*16       AP(*), BP(*), Z(*,*)                              #
+#                                                                    #
+######################################################################
+
 
 
 COMMENTS AND BUGS:

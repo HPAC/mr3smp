@@ -518,6 +518,17 @@ int dspeig(char *jobz, char *range, char *uplo, int *n, double *AP,
  *
  */
 
+
+
+
+/* Routine for the dense generalized symmetric-definite eigenproblem 
+ * using packed storage */
+int dspgeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double *AP, double *BP, double *vlp, double *vup, 
+	    int *ilp, int *iup, int *mp, double *W, double *Z, 
+	    int *ldzp);
+// to fill
+
  
 
 
@@ -782,6 +793,18 @@ int zhpeig(char *jobz, char *range, char *uplo, int *np,
  * COMPLEX*16       AP(*), Z(*,*)
  *
  */
+
+
+
+
+/* Routine for the dense generalized Hermitian-definite eigenproblem 
+ * in packed storage */
+int zhpgeig(int *itype, char *jobz, char *range, char *uplo, int *np, 
+	    double complex *AP, double complex *BP, double *vlp, 
+	    double *vup, int *ilp, int *iup, int *mp, double *W, 
+	    double complex *Z, int *ldzp);
+// to fill
+
 #endif
 
 #endif
