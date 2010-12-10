@@ -437,6 +437,87 @@ int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *n,
  *
  */
 
+
+
+
+/* Routine for the dense symmetric eigenproblem in packed storage */
+int dspeig(char *jobz, char *range, char *uplo, int *n, double *AP, 
+	   double *vl, double *vu, int *il, int *iu, 
+	   int *m, double *W, double *Z, int *ldz);
+
+/* Arguments:
+ * ----------
+ *
+ * INPUTS: 
+ * -------
+ * jobz              "N" - compute only eigenvalues
+ *                   "V" - compute also eigenvectors
+ * range             "A" - all
+ *                   "V" - by interval: (VL,VU]
+ *                   "I" - by index:     IL-IU
+ * uplo              "L" - Upper triangle of A stored
+ *                   "U" - Lower triangle of A stored
+ * n                 Order of the matrix A
+ * ldz               Leading dimension of eigenvector matrix Z; 
+ *                   often equal to matrix size n
+ *
+ * INPUT + OUTPUT: 
+ * ---------------
+ * AP (double[s])    On entry symmetric input matrix, stored 
+ * s = (n*(n+1))/2   in packed storage by columns. Depending on the 
+ *                   value of 'uplo' only the upper or lower 
+ *                   triangular part is referenced.
+ *                   (On output the array will be overwritten).
+ * vl                If range="V", lower bound of interval
+ *                   (vl,vu], on output refined.
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues.
+ * vu                If range="V", upper bound of interval
+ *                   (vl,vu], on output refined.
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues.
+ * il                If range="I", lower index (1-based indexing) of 
+ *                   the subset 'il' to 'iu'.
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are 
+ *                   computed.
+ * iu                If range="I", upper index (1-based indexing) of 
+ *                   the subset 'il' to 'iu'.
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are 
+ *                   computed.
+ *
+ * OUTPUT: 
+ * -------
+ * m                 Number of eigenvalues and eigenvectors computed. 
+ * W (double[n])     Eigenvalues
+ *                   The first 'm' entries contain the eigenvalues.
+ * Z                 Eigenvectors.
+ * (double[n*m])     Enough space must be provided to store the
+ *                   vectors. 'm' should be bigger or equal 
+ *                   to 'n' for range="A" or "V" and 'iu-il+1' for 
+ *                   range="I".
+ *
+ * RETURN VALUE: 
+ * -------------
+ *                 0 - Success  
+ *                 1 - Wrong input parameter
+ *                 2 - Misc errors  
+ *
+ * The Fortran interface takes an additinal integer argument INFO
+ * to retrieve the return value. 
+ *
+ * CALL DSPEIG(JOBZ, RANGE, UPLO, N, AP, VL, VU, IL, IU, 
+ *             M, W, Z, LDZ, INFO)
+ * 
+ * CHARACTER        JOBZ, RANGE, UPLO
+ * INTEGER          N, IL, IU, M, LDZ, INFO
+ * DOUBLE PRECISION AP(*), VL, VU, W(*), Z(*,*)
+ *
+ */
+
  
 
 
@@ -616,6 +697,89 @@ int zhegeig(int *itype, char *jobz, char *range, char *uplo, int *np,
  * INTEGER          N, IL, IU, M, LDA, LDB, INFO
  * DOUBLE PRECISION VL, VU, W(*)
  * COMPLEX*16       A(*,*), B(*,*)
+ *
+ */
+
+
+
+
+/* Routine for the dense Hermitian eigenproblem in packed storage */
+int zhpeig(char *jobz, char *range, char *uplo, int *np, 
+	   double complex *AP, double *vlp, double *vup, 
+	   int *ilp, int *iup, int *mp, double *W, 
+	   double complex *Z, int *ldzp);
+
+/* Arguments:
+ * ----------
+ *
+ * INPUTS: 
+ * -------
+ * jobz              "N" - compute only eigenvalues
+ *                   "V" - compute also eigenvectors
+ * range             "A" - all
+ *                   "V" - by interval: (VL,VU]
+ *                   "I" - by index:     IL-IU
+ * uplo              "L" - Upper triangle of A stored
+ *                   "U" - Lower triangle of A stored
+ * n                 Order of the matrix A
+ * ldz               Leading dimension of eigenvector matrix Z; 
+ *                   often equal to matrix size n
+ *
+ * INPUT + OUTPUT: 
+ * ---------------
+ * AP (double        On entry Hermitian input matrix, stored 
+ *     complex[s])   in packed storage by columns. Depending on the 
+ * s = (n*(n+1))/2   value of 'uplo' only the upper or lower 
+ *                   triangular part is referenced.
+ *                   (On output the array will be overwritten).
+ * vl                If range="V", lower bound of interval
+ *                   (vl,vu], on output refined.
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues.
+ * vu                If range="V", upper bound of interval
+ *                   (vl,vu], on output refined.
+ *                   If range="A" or "I" not referenced as input.
+ *                   On output the interval (vl,vu] contains ALL
+ *                   the computed eigenvalues.
+ * il                If range="I", lower index (1-based indexing) of 
+ *                   the subset 'il' to 'iu'.
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are 
+ *                   computed.
+ * iu                If range="I", upper index (1-based indexing) of 
+ *                   the subset 'il' to 'iu'.
+ *                   If range="A" or "V" not referenced as input.
+ *                   On output the eigenvalues with index il to iu are 
+ *                   computed.
+ *
+ * OUTPUT: 
+ * -------
+ * m                 Number of eigenvalues and eigenvectors computed. 
+ * W (double[n])     Eigenvalues
+ *                   The first 'm' entries contain the eigenvalues.
+ * Z                 Eigenvectors.
+ * (double           Enough space must be provided to store the
+ *  complex[n*m])    vectors. 'm' should be bigger or equal 
+ *                   to 'n' for range="A" or "V" and 'iu-il+1' for 
+ *                   range="I".
+ *
+ * RETURN VALUE: 
+ * -------------
+ *                   0 - Success  
+ *                   1 - Wrong input parameter
+ *                   2 - Misc errors  
+ *
+ * The Fortran interface takes an additinal integer argument INFO
+ * to retrieve the return value. 
+ *
+ * CALL ZHPEIG(JOBZ, RANGE, UPLO, N, AP, VL, VU, IL, IU, 
+ *             M, W, Z, LDZ, INFO)
+ * 
+ * CHARACTER        JOBZ, RANGE, UPLO
+ * INTEGER          N, IL, IU, M, LDZ, INFO
+ * DOUBLE PRECISION VL, VU, W(*)
+ * COMPLEX*16       AP(*), Z(*,*)
  *
  */
 #endif
