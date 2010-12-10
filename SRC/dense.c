@@ -52,12 +52,32 @@ extern void ztrmm_(char*, char*, char*, char*, int*, int*,
 		   double complex*, int*);
 #endif
 
+/* LAPACK routines for functions of the symmetric and the Hermitian 
+ * eigenproblem in packed storage */ 
+extern void dsptrd_(char*,int*,double*,double*,double*,double*,int*);
+extern void dopmtr_(char*,char*,char*,int*,int*,double*,double*,
+		    double*,int*,double*,int*);
+extern double dlansp_(char*,char*,int*,double*,double*);
+#ifdef COMPLEX_SUPPORTED
+extern void zhptrd_(char*,int*,double complex*,double*,double*,
+		    double complex*,int*);
+extern void zupmtr_(char*,char*,char*,int*,int*,double complex*,
+		    double complex*,double complex*,int*,
+		    double complex*,int*);
+extern double zlanhp_(char*,char*,int*,double complex*,double*);
+#endif
+
 /* Other prototypes */
 static double dscale_matrix(char*, char*, int*, double*, int*, 
 			    double*, double*, double*);
+static double dscale_matrix_packed(char*, char*, int*, double*, 
+				   double*, double*, double*);
 #ifdef COMPLEX_SUPPORTED
 static double zscale_matrix(char*, char*, int*, double complex*, int*,
 			    double*, double*, double complex*);
+static double zscale_matrix_packed(char*, char*, int*, 
+				   double complex*, double*, 
+				   double*, double complex*);
 #endif
 
 
@@ -101,7 +121,7 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   E = (double *) malloc( n*sizeof(double) );
   assert(E != NULL);
 
-  TAU = (double *) malloc( n*n*sizeof(double) );
+  TAU = (double *) malloc( n*sizeof(double) );
   assert(TAU != NULL);
 
   work = (double *) malloc( szwrk*sizeof(double) );
@@ -130,6 +150,8 @@ int dsyeig(char *jobz, char *range, char *uplo, int *np, double *A,
   /* Scaling of eigenvalues if necessary */
   if (scale != 1.0) { /* FP cmp okay */
     invscale = 1.0/scale;
+    *vlp *= invscale;
+    *vup *= invscale;
     dscal_(mp, &invscale, W, &ione);
   }
 
@@ -227,6 +249,91 @@ int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *np,
 
 
 
+
+/* Routine for the dense symmetric eigenproblem in packed storage */
+int dspeig(char *jobz, char *range, char *uplo, int *np, double *AP, 
+	   double *vlp, double *vup, int *ilp, int *iup, 
+	   int *mp, double *W, double *Z, int *ldzp)
+{
+  int    n      = *np;
+  int    tryRAC = 1;
+
+  double *D, *E, *TAU;
+  double *work;
+  int    *Zsupp;
+  int    info, ione=1;
+
+  double scale = 1.0;
+  double invscale;
+
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+
+  if( !(onlyW  || wantZ  || cntval) ) return(1);
+  if( !(alleig || valeig || indeig) ) return(1);
+  if(n <= 0) return(1);
+  if (valeig) {
+    if(*vup<=*vlp) return(1);
+  } else if (indeig) {
+    if (*ilp<1 || *ilp>n || *iup<*ilp || *iup>n) return(1);
+  }
+  
+  D = (double *) malloc( n*sizeof(double) );
+  assert(D != NULL);
+  
+  E = (double *) malloc( n*sizeof(double) );
+  assert(E != NULL);
+  
+  TAU = (double *) malloc( n*sizeof(double) );
+  assert(TAU != NULL);
+  
+  work = (double *) malloc( n*sizeof(double) );
+  assert(work != NULL);
+  
+  Zsupp = (int *) malloc( 2*n*sizeof(int) );
+  assert(Zsupp != NULL);
+  
+  /* Scale matrix if necessary */
+  scale = dscale_matrix_packed(range, uplo, np, AP, vlp, vup, work);
+
+  /* Reduction to tridiagonal */
+  dsptrd_(uplo, np, AP, D, E, TAU, &info);
+  assert(info == 0);
+  
+  /* Use MRRR to compute eigenvalues and -vectors */
+  info = mrrr(jobz, range, np, D, E, vlp, vup, ilp, iup, 
+  	      &tryRAC, mp, W, Z, ldzp, Zsupp);
+  assert(info == 0);
+  
+  /* Backtransformation Z = Q*Z */
+  dopmtr_("L", uplo, "N", np, mp, AP, TAU, Z, ldzp, work, &info);
+  assert(info == 0);
+
+  /* Scaling of eigenvalues if necessary */
+  if (scale != 1.0) { /* FP cmp okay */
+    invscale = 1.0/scale;
+    *vlp *= invscale;
+    *vup *= invscale;
+    dscal_(mp, &invscale, W, &ione);
+  }
+  
+  free(D);
+  free(E);
+  free(TAU);
+  free(work);
+  free(Zsupp);
+  
+  return(0);
+}
+
+    
+
+
+/* Scale dense matrix to allowable range */
 static 
 double dscale_matrix(char *range, char *uplo, int *np, double *A, 
 		     int *ldap, double *vlp, double *vup, double *work)
@@ -266,6 +373,47 @@ double dscale_matrix(char *range, char *uplo, int *np, double *A,
 	dscal_(&itmp, &sigma, &A[i*lda], &ione);
       }
     }
+    if (valeig) {
+      *vlp *= sigma;
+      *vup *= sigma;
+    }
+  }
+  
+  return(sigma);
+}
+  
+
+
+  
+/* Scale matrix in packed storage to allowable range */ 
+static 
+double dscale_matrix_packed(char *range, char *uplo, int *np, double *AP, 
+			    double *vlp, double *vup, double *work)
+{
+  double sigma = 1.0;
+  double smlnum, bignum, rmin, rmax;
+  double norm;
+  bool   scaled = false;
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  int    n      = *np;
+  int    ione=1, itmp;
+
+  smlnum = DBL_MIN / DBL_EPSILON;
+  bignum = 1.0 / smlnum;
+  rmin   = sqrt(smlnum);
+  rmax   = fmin(sqrt(bignum), 1.0 / sqrt(sqrt(DBL_MIN)));
+
+  norm = dlansp_("M", uplo, np, AP, work);
+  if (norm > 0.0 && norm < rmin) {
+    scaled = true;
+    sigma  = rmin / norm;
+  } else if (norm > rmax) {
+    scaled = true;
+    sigma  = rmax / norm;
+  }
+  if (scaled) {
+    itmp = (n*(n+1))/2;
+    dscal_(&itmp, &sigma, AP, &ione);
     if (valeig) {
       *vlp *= sigma;
       *vup *= sigma;
@@ -321,7 +469,7 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   E = (double *) malloc(n*sizeof(double));
   assert(E != NULL);
 
-  TAU = (double complex *) malloc((size_t) n*n*sizeof(double complex));
+  TAU = (double complex *) malloc((size_t) n*sizeof(double complex));
   assert(TAU != NULL);
 
   work = (double complex *) malloc( szwrk*sizeof(double complex) );
@@ -369,6 +517,8 @@ int zheeig(char *jobz, char *range, char *uplo, int *np,
   /* Scaling of eigenvalues if necessary */
   if (scale != 1.0) { /* FP cmp okay */
     invscale = 1.0/scale;
+    *vlp *= invscale;
+    *vup *= invscale;
     dscal_(mp, &invscale, W, &ione);
   }
 
@@ -466,6 +616,114 @@ int zhegeig(int *itype, char *jobz, char *range, char *uplo, int *np,
 
 
 
+
+/* Routine for the dense symmetric eigenproblem in packed storage */
+int zhpeig(char *jobz, char *range, char *uplo, int *np, 
+	   double complex *AP, double *vlp, double *vup, 
+	   int *ilp, int *iup, int *mp, double *W, 
+	   double complex *Z, int *ldzp)
+{
+  int      n      = *np;
+  long int nn     = n;
+  int      ldz    = *ldzp;
+  int      tryRAC = 1;
+  long int tmp, mm;
+  long int i, j;
+
+  double *D, *E, *Ztmp;
+  double complex *TAU;
+  double complex *work;
+  int    *Zsupp;
+  int    info, ione=1, m;
+
+  double scale = 1.0;
+  double invscale;
+
+  bool   onlyW  = (jobz[0]  == 'N' || jobz[0]  == 'n');
+  bool   wantZ  = (jobz[0]  == 'V' || jobz[0]  == 'v');
+  bool   cntval = (jobz[0]  == 'C' || jobz[0]  == 'c');
+  bool   alleig = (range[0] == 'A' || range[0] == 'a');
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  bool   indeig = (range[0] == 'I' || range[0] == 'i');
+
+  if( !(onlyW  || wantZ  || cntval) ) return(1);
+  if( !(alleig || valeig || indeig) ) return(1);
+  if(n <= 0) return(1);
+  if (valeig) {
+    if(*vup<=*vlp) return(1);
+  } else if (indeig) {
+    if (*ilp<1 || *ilp>n || *iup<*ilp || *iup>n) return(1);
+  }
+  
+  D = (double *) malloc( n*sizeof(double) );
+  assert(D != NULL);
+  
+  E = (double *) malloc( n*sizeof(double) );
+  assert(E != NULL);
+  
+  TAU = (double complex*) malloc( n*sizeof(double complex) );
+  assert(TAU != NULL);
+  
+  work = (double complex*) malloc( n*sizeof(double complex) );
+  assert(work != NULL);
+  
+  Zsupp = (int *) malloc( 2*n*sizeof(int) );
+  assert(Zsupp != NULL);
+  
+  /* Scale matrix if necessary */
+  scale = zscale_matrix_packed(range, uplo, np, AP, vlp, vup, work);
+
+  /* Reduction to tridiagonal */
+  zhptrd_(uplo, np, AP, D, E, TAU, &info);
+  assert(info == 0);
+
+  /* Use MRRR to compute eigenvalues and -vectors using part of Z 
+   * to temporarily store the real eigenvectors of the tridiagonal */
+  if (alleig)
+    mm    = n;
+  else if (indeig)
+    mm    = (*iup)-(*ilp)+1;
+  else {
+    info = mrrr("Count", range, np, D, E, vlp, vup, ilp, iup, 
+		&tryRAC, &m, W, NULL, ldzp, Zsupp);
+    mm = m;
+  }
+  tmp  = (nn*mm)/2 + ( ((nn*mm) % 2) > 0 ); /* ceil(n*m/2) */
+  Ztmp = (double *) &Z[ldz*mm - tmp];
+
+  /* Actual call to MRRR */
+  info = mrrr(jobz, range, np, D, E, vlp, vup, ilp, iup, 
+  	      &tryRAC, mp, W, Ztmp, np, Zsupp);
+  assert(info == 0);
+
+  /* Copy intermediate real eigenvectors to complex Z */ 
+  for (j=0; j<(*mp); j++)
+    for (i=0; i<(*np); i++)
+      Z[j*ldz + i] = Ztmp[j*n + i] + 0.0*I;
+  
+  /* Backtransformation Z = Q*Z */
+  zupmtr_("L", uplo, "N", np, mp, AP, TAU, Z, ldzp, work, &info);
+  assert(info == 0);
+
+  /* Scaling of eigenvalues if necessary */
+  if (scale != 1.0) { /* FP cmp okay */
+    invscale = 1.0/scale;
+    *vlp *= invscale;
+    *vup *= invscale;
+    dscal_(mp, &invscale, W, &ione);
+  }
+  
+  free(D);
+  free(E);
+  free(TAU);
+  free(work);
+  free(Zsupp);
+  
+  return(0);
+}
+
+
+
 static 
 double zscale_matrix(char *range, char *uplo, int *np, 
 		     double complex *A, int *ldap, double *vlp, 
@@ -514,7 +772,51 @@ double zscale_matrix(char *range, char *uplo, int *np,
   
   return(sigma);
 }
+
+
+
+/* Scale matrix in packed storage to allowable range */ 
+static 
+double zscale_matrix_packed(char *range, char *uplo, int *np, 
+			    double complex *AP, double *vlp, 
+			    double *vup, double complex *work)
+{
+  double sigma = 1.0;
+  double smlnum, bignum, rmin, rmax;
+  double norm;
+  bool   scaled = false;
+  bool   valeig = (range[0] == 'V' || range[0] == 'v');
+  int    n      = *np;
+  int    ione=1, itmp;
+  double *tmpp;
+
+  smlnum = DBL_MIN / DBL_EPSILON;
+  bignum = 1.0 / smlnum;
+  rmin   = sqrt(smlnum);
+  rmax   = fmin(sqrt(bignum), 1.0 / sqrt(sqrt(DBL_MIN)));
+
+  tmpp = (double*) work;
+  norm = zlanhp_("M", uplo, np, AP, tmpp);
+  if (norm > 0.0 && norm < rmin) {
+    scaled = true;
+    sigma  = rmin / norm;
+  } else if (norm > rmax) {
+    scaled = true;
+    sigma  = rmax / norm;
+  }
+  if (scaled) {
+    itmp = (n*(n+1))/2;
+    zdscal_(&itmp, &sigma, AP, &ione);
+    if (valeig) {
+      *vlp *= sigma;
+      *vup *= sigma;
+    }
+  }
+  
+  return(sigma);
+}
 #endif
+
 
 
 
@@ -538,6 +840,15 @@ void dsygeig_(int *itype, char *jobz, char *range, char *uplo,
 }
 
 
+void dspeig_(char *jobz, char *range, char *uplo, int *np, double *AP, 
+	     double *vlp, double *vup, int *ilp, int *iup, 
+	     int *mp, double *W, double *Z, int *ldzp, int *info)
+{
+  *info = dspeig(jobz, range, uplo, np, AP, vlp, vup, ilp, iup, 
+		 mp, W, Z, ldzp);
+}
+
+
 #ifdef COMPLEX_SUPPORTED
 void zheeig_(char *jobz, char *range, char *uplo, int *n, 
 	     double complex *A, int *lda, double *vl, double *vu, 
@@ -556,6 +867,16 @@ void zhegeig_(int *itype, char *jobz, char *range, char *uplo, int *np,
 {
   *info = zhegeig(itype, jobz, range, uplo, np, A, ldap, B, ldbp, 
 		  vlp, vup, ilp, iup, mp, W);
+}
+
+
+void zhpeig_(char *jobz, char *range, char *uplo, int *np, 
+	     double complex *AP, double *vlp, double *vup, 
+	     int *ilp, int *iup, int *mp, double *W, 
+	     double complex *Z, int *ldzp, int *info)
+{
+  *info =  zhpeig(jobz, range, uplo, np, AP, vlp, vup, 
+		  ilp, iup, mp, W, Z, ldzp);
 }
 #endif
 
