@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     B[i+i*ldb] += n; 
 
 
-  /* Calling "dsygeig" to compute all or a subset of eigenvalues and 
+  /* Calling "zhegeig" to compute all or a subset of eigenvalues and 
    * optinally eigenvectors of a dense generalized symmetric-definite 
    * eigenproblem;
    * The number of threads for the LAPACK routines are set by 
