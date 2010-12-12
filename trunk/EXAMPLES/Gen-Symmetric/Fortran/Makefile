@@ -14,19 +14,17 @@ BLAS = $(HOME)/libs/lapack-3.2.2/blas_gnu_LINUX.a
 FFLAGS  += -I$(INCPATH)
 LDFLAGS += -I$(INCPATH)
 
-all: main_all.x main_ind.x
+all: main_gsym_all.x main_gsym_ind.x
 
-main_all.x: main_all.o
-	$(LD) $(LDFLAGS) main_all.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) \
-        -lgfortran -lm -o $@
+main_gsym_all.x: main_gsym_all.o
+	$(LD) $(LDFLAGS) main_gsym_all.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) -lgfortran -lm -o $@
 
-main_all.o:
+main_gsym_all.o:
 
-main_ind.x: main_ind.o
-	$(LD) $(LDFLAGS) main_ind.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) \
-        -lgfortran -lm -o $@
+main_gsym_ind.x: main_gsym_ind.o
+	$(LD) $(LDFLAGS) main_gsym_ind.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) -lgfortran -lm -o $@
 
-main_ind.o:
+main_gsym_ind.o:
 
 .PHONY: clean
 clean:

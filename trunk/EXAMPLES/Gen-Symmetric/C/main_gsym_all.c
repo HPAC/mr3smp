@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   assert(A != NULL);
 
   B = (double *) malloc((size_t) n*n *sizeof(double));
-  assert(A != NULL);
+  assert(B != NULL);
 
   W = (double *) malloc((size_t)   n *sizeof(double));
   assert(W != NULL);

@@ -17,14 +17,12 @@ LDFLAGS += -I$(INCPATH)
 all: main_all.x main_ind.x
 
 main_all.x: main_all.o
-	$(LD) $(LDFLAGS) main_all.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) \
-        -lgfortran -lm -o $@
+	$(LD) $(LDFLAGS) main_all.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) -lgfortran -lm -o $@
 
 main_all.o:
 
 main_ind.x: main_ind.o
-	$(LD) $(LDFLAGS) main_ind.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) \
-        -lgfortran -lm -o $@
+	$(LD) $(LDFLAGS) main_ind.o -L$(MRRRPATH) -lmrrr $(LAPACK) $(BLAS) -lgfortran -lm -o $@
 
 main_ind.o:
 

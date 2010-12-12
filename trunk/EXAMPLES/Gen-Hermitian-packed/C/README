@@ -1,0 +1,9 @@
+IMPORTANT:
+
+If compiling creates an error saying 
+
+"undefined reference to 'zheeig'"
+
+the archive 'libmrrr.h' was build with 
+COMPLEX_SUPPORT=0 (which is the default).
+
