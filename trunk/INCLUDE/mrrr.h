@@ -149,7 +149,7 @@ int mrrr(char *jobz, char *range, int *n, double *restrict D,
  */
 
 
-/* Set the number of threads in case OMP_NUM_THREADS is not 
+/* Set the number of threads in case PMR_NUM_THREADS is not 
  * specified */
 #define DEFAULT_NUM_THREADS    4
 

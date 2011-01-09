@@ -144,7 +144,8 @@ ADDITIONAL ROUTINES FOR DENSE STANDARD AND GENERALIZED EIGENPROBLEMS
 For convinience there are also routines for the standard and 
 generalized symmetric and Hermitian eigenproblem added that make use 
 of the multi-threaded MRRR. The functionality is similar to LAPACK's 
-routines for this operations.
+routines for this operations. The routines using packed storage should 
+be avoided whenever possible, since their performance is much worse.
 
 The routines are (using a LAPACK like notation):
 ----------------------------------------------------------------------
