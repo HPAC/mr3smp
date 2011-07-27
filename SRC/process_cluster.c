@@ -465,7 +465,7 @@ int create_subtasks(cluster_t *cl, int tid, int nthreads,
   max_size = fmax(1, PMR_get_counter_value(num_left) /
 		     (fmin(depth+1,4)*nthreads) );
   task_inserted = true;
-  avggap_factor = 0.5;
+  avggap_factor = 0.8;
 
   new_first = cl_begin;
   for (i=cl_begin; i<=cl_end; i++) {    
@@ -539,7 +539,7 @@ int create_subtasks(cluster_t *cl, int tid, int nthreads,
 	  
 	  if (k == new_last-1)
 	    cl_last = new_last;
-	  else if (Wgap[k] > avggap_factor*avggap)
+	  else if (k != cl_first && Wgap[k] > avggap_factor*avggap)
 	    cl_last = k;
 	  else
 	    continue;
