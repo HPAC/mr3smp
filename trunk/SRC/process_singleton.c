@@ -97,7 +97,8 @@ int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left,
   int              IONE = 1;
   double           DZERO = 0.0;
   double           tol, lambda, left, right;
-  int              i_local, zind;
+  int              i_local;
+  size_t           zind;
   double           gap, lgap, rgap, gaptol, savedgap, tmp;
   bool             usedBS, usedRQ, needBS, wantNC, step2II;
   int              r, offset;

@@ -452,7 +452,7 @@ int create_subtasks(cluster_t *cl, int tid, int nthreads,
   int       i, k;
   int       new_first, new_last;
   int       new_size;
-  int       new_ftt0, new_ftt1;
+  size_t    new_ftt0, new_ftt1;
   int       cl_first, cl_last;
   double    lgap;
   rrr_t     *RRR_parent;
