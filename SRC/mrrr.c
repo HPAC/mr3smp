@@ -1,7 +1,7 @@
 /* Computing all or a subset of eigenvalues and optionally eigenvectors
  * of a symmetric tridiagonal matrix.
  *
- * See header file 'mrrr.h' for more information.
+ * See README and header file 'mrrr.h' for more information.
  *
  * Copyright (c) 2010, RWTH Aachen University
  * All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * Coded by Matthias Petschow (petschow@aices.rwth-aachen.de),
- * September 2010, Version 1.0
+ * September 2010, Version 1.1
  *
  * This code was the result of a collaboration between 
  * Matthias Petschow and Paolo Bientinesi. When you use this 
