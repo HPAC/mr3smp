@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  * Coded by Matthias Petschow (petschow@aices.rwth-aachen.de),
- * September 2010, Version 1.0
+ * September 2010, Version 1.1
  *
  * This code was the result of a collaboration between 
  * Matthias Petschow and Paolo Bientinesi. When you use this 
