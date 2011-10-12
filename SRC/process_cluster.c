@@ -70,15 +70,6 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 		   val_t *Wstruct, vec_t *Zstruct, tol_t *tolstruct, 
 		   double *work, int *iwork);
 
-static inline 
-int create_subtasks(cluster_t *cl, int tid, int nthreads, 
-		    counter_t *num_left, workQ_t *workQ, rrr_t *RRR, 
-		    val_t *Wstruct, vec_t *Zstruct, tol_t *tolstruct,
-		    double *work, int *iwork);
-
-
-
-
 
 /* Processing a cluster */
 int PMR_process_c_task(cluster_t *cl, int tid, int nthreads, 
@@ -103,10 +94,6 @@ int PMR_process_c_task(cluster_t *cl, int tid, int nthreads,
 			Wstruct, Zstruct, tolstruct, work, iwork);
   assert(info == 0);
   
-  info = create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
-			 Wstruct, Zstruct, tolstruct, work, iwork);
-  assert(info == 0);
-
   return(0);
 }
 
@@ -286,6 +273,7 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
   int    rf_begin, rf_end, p, q;
   int    num_tasks, count;
   sem_t  sem;
+  subtasks_t *subtasks;
   task_t *task;
 
   if (depth == 0) {
@@ -304,6 +292,10 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
     for (i=0; i<mbl; i++) {
       W[cl_begin + i] += sigma;
     }
+
+	info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
+						   Wstruct, Zstruct, tolstruct, work, iwork);
+	assert(info == 0);
 
   } else {
 
@@ -330,7 +322,22 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
       others_part = cl_size - own_part;
       chunk       = others_part/num_tasks;
       
-      sem_init(&sem, 0, 0);
+     subtasks = malloc(sizeof(subtasks_t));
+  //----------------------------------------
+  //   subtasks->taskcount = num_tasks;
+  //   pthread_mutex_init(&subtasks->taskmutex, NULL);
+     subtasks->counter = PMR_create_counter(num_tasks);
+  //----------------------------------------
+
+     subtasks->cl = cl;
+     subtasks->nthreads = nthreads;
+     subtasks->num_left = num_left;
+     subtasks->workQ = workQ;
+     subtasks->RRR = RRR;
+     subtasks->Zstruct = Zstruct;
+     subtasks->num_tasks = num_tasks;
+     subtasks->chunk = chunk;
+
       rf_begin = cl_begin;
       p        = Windex[cl_begin];
       for (i=0; i<num_tasks; i++) {
@@ -338,7 +345,8 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 	q      = p        + chunk - 1;
 	
 	task = PMR_create_r_task(rf_begin, D, DLL, p, q, bl_size, 
-				 bl_spdiam, tid, &sem);
+                                 bl_spdiam, tid, subtasks);
+	printf("refinement tasks created");
 
 	if (rf_begin <= rf_end)
 	  PMR_insert_task_at_back(workQ->r_queue, task);
@@ -359,29 +367,6 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 		work, iwork, &pivmin, &bl_spdiam, &bl_size, &info);
 	assert( info == 0 );
       }
-      /* Empty all refine tasks before waiting */
-      PMR_process_r_queue(tid, workQ, Wstruct, tolstruct, work, 
-			  iwork);
-
-      /* Barrier: wait until all created tasks finished */
-      count = num_tasks;
-      while (count > 0) {
-	while (sem_wait(&sem) != 0) { };
-	count--;
-      }
-      sem_destroy(&sem);
-
-      /* Edit right gap at splitting point */
-      rf_begin = cl_begin;
-      for (i=0; i<num_tasks; i++) {
-	rf_end = rf_begin + chunk - 1;
-	
-	Wgap[rf_end] = Wshifted[rf_end + 1] - Werr[rf_end + 1]
-	               - Wshifted[rf_end] - Werr[rf_end];
-      
-	rf_begin = rf_end + 1;
-      }
-
     } else {
       /* do refinement of cluster without creating tasks */
       
@@ -405,15 +390,19 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
       if (p == q) {
 	Wgap[cl_begin] = savegap;
       }  
-    } /* end refine with or without creating tasks */
-  
-    sigma = L[bl_size-1];
-    
-    /* refined eigenvalues with all shifts applied in W */
-    for ( j=cl_begin; j<=cl_end; j++ ) {
-      W[j] = Wshifted[j] + sigma;
-    }
+      
+      sigma = L[bl_size-1];
+      
+      /* refined eigenvalues with all shifts applied in W */
+      for ( j=cl_begin; j<=cl_end; j++ ) {
+        W[j] = Wshifted[j] + sigma;
+      }
 
+      info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
+                             Wstruct, Zstruct, tolstruct, work, iwork);
+      assert(info == 0);
+
+    } /* end refine with or without creating tasks */
   } /* end refining eigenvalues */
 
   return(0);
@@ -422,8 +411,7 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 
 
 
-static inline 
-int create_subtasks(cluster_t *cl, int tid, int nthreads, 
+int PMR_create_subtasks(cluster_t *cl, int tid, int nthreads, 
 		    counter_t *num_left, workQ_t *workQ, rrr_t *RRR, 
 		    val_t *Wstruct, vec_t *Zstruct, tol_t *tolstruct,
 		    double *work, int *iwork)
@@ -614,4 +602,4 @@ int create_subtasks(cluster_t *cl, int tid, int nthreads,
   free(cl);
 
   return(0);
-} /* end create_subtasks */
+} /* end PMR_create_subtasks */
