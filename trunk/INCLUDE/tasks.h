@@ -72,6 +72,22 @@ typedef struct {
   rrr_t      *RRR;
 } cluster_t, singleton_t;
 
+typedef struct {
+  int        taskcount;
+  //----------------------------------------
+  //pthread_mutex_t    taskmutex;
+  counter_t  *counter;
+  //----------------------------------------
+
+  cluster_t  *cl;
+  int        nthreads;
+  counter_t  *num_left;
+  workQ_t    *workQ;
+  rrr_t      *RRR;
+  vec_t      *Zstruct;
+	int 			 num_tasks;
+	int				 chunk;
+} subtasks_t;
 
 typedef struct {
   int       begin;
@@ -82,7 +98,7 @@ typedef struct {
   int       bl_size;
   double    bl_spdiam;
   int       producer;
-  sem_t     *sem;
+  subtasks_t *sts;
 } refine_t;
 
 
@@ -98,7 +114,7 @@ task_t *PMR_create_s_task(int begin, int end, int depth,
 
 task_t *PMR_create_r_task(int rf_begin, double *D, double *DLL, int p, 
 			  int q, int bl_size, double bl_spdiam, 
-			  int producer, sem_t *sem);
+                          int producer, subtasks_t *sts);
 
 int PMR_process_c_task(cluster_t *cl, int tid, int nthreads, 
 		       counter_t *num_left, workQ_t *workQ, 
@@ -114,6 +130,11 @@ int PMR_process_r_task(refine_t *rf, int tid, val_t *Wstruct,
 
 int PMR_process_r_queue(int tid, workQ_t *workQ, val_t *Wstruct, 
 			tol_t *tolstruct, double *work, int *iwork);
+
+int PMR_create_subtasks(cluster_t *cl, int tid, int nthreads, 
+                    counter_t *num_left, workQ_t *workQ, rrr_t *RRR, 
+                    val_t *Wstruct, vec_t *Zstruct, tol_t *tolstruct,
+                    double *work, int *iwork);
 
 void PMR_destroy_task(task_t *task);
 

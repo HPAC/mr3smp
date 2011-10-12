@@ -123,7 +123,7 @@ task_t *PMR_create_s_task(int begin, int end, int depth, int bl_begin,
 
 task_t *PMR_create_r_task(int rf_begin, double *D, double *DLL, int p, 
 			  int q, int bl_size, double bl_spdiam, 
-			  int producer, sem_t *sem)
+			  int producer, subtasks_t *sts)
 {
   refine_t *r;
   task_t   *t;
@@ -141,7 +141,7 @@ task_t *PMR_create_r_task(int rf_begin, double *D, double *DLL, int p,
   r->bl_size   = bl_size;
   r->bl_spdiam = bl_spdiam;
   r->producer  = producer;
-  r->sem       = sem;
+  r->sts       = sts;
   
   t->data = (void *) r;
   t->flag = REFINEMENT_TASK_FLAG;
