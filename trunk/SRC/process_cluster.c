@@ -346,7 +346,6 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 	
 	task = PMR_create_r_task(rf_begin, D, DLL, p, q, bl_size, 
                                  bl_spdiam, tid, subtasks);
-	printf("refinement tasks created");
 
 	if (rf_begin <= rf_end)
 	  PMR_insert_task_at_back(workQ->r_queue, task);
