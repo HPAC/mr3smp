@@ -274,7 +274,7 @@
       DONE = 0
       IBEGIN = 1
       WBEGIN = 1
-      DO 170 JBLK = 1, IBLOCK( M )
+      DO 170 JBLK = 1, IBLOCK( MAX(1,M) )
          IEND = ISPLIT( JBLK )
          SIGMA = L( IEND )
 *        Find the eigenvectors of the submatrix indexed IBEGIN
