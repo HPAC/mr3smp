@@ -361,6 +361,29 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 		work, iwork, &pivmin, &bl_spdiam, &bl_size, &info);
 	assert( info == 0 );
       }
+      if (chunk == 0) {
+	      /* Edit right gap at splitting point */
+	      rf_begin = cl_begin;
+	      for (i=0; i<num_tasks; i++) {
+		rf_end = rf_begin + chunk - 1;
+		
+		Wgap[rf_end] = Wshifted[rf_end + 1] - Werr[rf_end + 1]
+			       - Wshifted[rf_end] - Werr[rf_end];
+	      
+		rf_begin = rf_end + 1;
+	      }
+	      sigma = L[bl_size-1];
+	      
+	      /* refined eigenvalues with all shifts applied in W */
+	      for ( j=cl_begin; j<=cl_end; j++ ) {
+		W[j] = Wshifted[j] + sigma;
+	      }
+
+	      info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
+				     Wstruct, Zstruct, tolstruct, work, iwork);
+	      assert(info == 0);
+      }
+
     } else {
       /* do refinement of cluster without creating tasks */
       
