@@ -271,7 +271,7 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
   double gl, gu, sigma, savegap;
   int    nleft, chunk, own_part, others_part;
   int    rf_begin, rf_end, p, q;
-  int    num_tasks, count;
+  int    num_tasks, count, taskcount;
   subtasks_t *subtasks;
   task_t *task;
 
@@ -322,7 +322,7 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
       chunk       = others_part/num_tasks;
       
       subtasks = malloc(sizeof(subtasks_t));
-      subtasks->counter = PMR_create_counter(num_tasks);
+      subtasks->counter = PMR_create_counter(num_tasks + 1);
 
       subtasks->cl = cl;
       subtasks->nthreads = nthreads;
@@ -361,7 +361,8 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 		work, iwork, &pivmin, &bl_spdiam, &bl_size, &info);
 	assert( info == 0 );
       }
-      if (chunk == 0) {
+      taskcount = PMR_decrement_counter(subtasks->counter, 1);
+      if (taskcount == 0) {
 	      /* Edit right gap at splitting point */
 	      rf_begin = cl_begin;
 	      for (i=0; i<num_tasks; i++) {
