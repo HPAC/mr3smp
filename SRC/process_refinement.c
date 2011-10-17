@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  *
  * Coded by Matthias Petschow (petschow@aices.rwth-aachen.de),
- * September 2010, Version 1.1
+ * September 2010, modified by Elmar Peise, September 2011
+ * Version 1.1
  *
  * This code was the result of a collaboration between 
  * Matthias Petschow and Paolo Bientinesi. When you use this 
@@ -85,46 +86,37 @@ int PMR_process_r_task(refine_t *rf, int tid, val_t *Wstruct,
 	  work, iwork, &pivmin, &bl_spdiam, &bl_size, &info);
   assert(info == 0);
 
-  //----------------------------------------
-  //pthread_mutex_lock(&sts->taskmutex);
-  //sts->taskcount--;
-  //taskcount = sts->taskcount;
-  //pthread_mutex_unlock(&sts->taskmutex);
   taskcount = PMR_decrement_counter(sts->counter, 1);
-  //----------------------------------------
-
+  
   if (taskcount == 0) {
-	  L = sts->RRR->L;
-	  W = Wstruct->W;
-	  rf_begin = sts->cl->begin;
-	  for (i=0; i<sts->num_tasks; i++) {
-	  	rf_end = rf_begin + sts->chunk - 1;
-	  	
-	  	Wgap[rf_end] = Wshifted[rf_end + 1] - Werr[rf_end + 1]
-	  								 - Wshifted[rf_end] - Werr[rf_end];
-	  
-	  	rf_begin = rf_end + 1;
-	  }
-	  sigma = L[bl_size-1];
-	  
-	  /* refined eigenvalues with all shifts applied in W */
-	  for ( i=sts->cl->begin; i<=sts->cl->end; i++ ) {
-	    W[i] = Wshifted[i] + sigma;
-	  }
-
-		// create subtasks
-    info = PMR_create_subtasks(sts->cl, tid, sts->nthreads, sts->num_left, sts->workQ,
-                           sts->RRR, Wstruct, sts->Zstruct, tolstruct, work, iwork);
+    L = sts->RRR->L;
+    W = Wstruct->W;
+    rf_begin = sts->cl->begin;
+    for (i=0; i<sts->num_tasks; i++) {
+      rf_end = rf_begin + sts->chunk - 1;
+      
+      Wgap[rf_end] = Wshifted[rf_end + 1] - Werr[rf_end + 1]
+	- Wshifted[rf_end] - Werr[rf_end];
+      
+      rf_begin = rf_end + 1;
+    }
+    sigma = L[bl_size-1];
+    
+    /* refined eigenvalues with all shifts applied in W */
+    for ( i=sts->cl->begin; i<=sts->cl->end; i++ ) {
+      W[i] = Wshifted[i] + sigma;
+    }
+    
+    /* create subtasks */
+    info = PMR_create_subtasks(sts->cl, tid, sts->nthreads, sts->num_left, 
+			       sts->workQ, sts->RRR, Wstruct, 
+			       sts->Zstruct, tolstruct, work, iwork);
     assert(info == 0);
-		
 
-  //----------------------------------------
-  //  pthread_mutex_destroy(&sts->taskmutex);
-   PMR_destroy_counter(sts->counter); 
-  //----------------------------------------
+    PMR_destroy_counter(sts->counter); 
     free(sts);
   }
-
+  
   free(rf);
 
   return(0);

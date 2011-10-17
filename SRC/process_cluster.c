@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  *
  * Coded by Matthias Petschow (petschow@aices.rwth-aachen.de),
- * September 2010, Version 1.1
+ * September 2010, modified by Elmar Peise, September 2011
+ * Version 1.1
  *
  * This code was the result of a collaboration between 
  * Matthias Petschow and Paolo Bientinesi. When you use this 
@@ -49,7 +50,6 @@
 #include <assert.h>
 #include <math.h>
 #include <float.h>
-#include <semaphore.h>
 #include "global.h"
 #include "mrrr.h"
 #include "counter.h"
@@ -272,7 +272,6 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
   int    nleft, chunk, own_part, others_part;
   int    rf_begin, rf_end, p, q;
   int    num_tasks, count;
-  sem_t  sem;
   subtasks_t *subtasks;
   task_t *task;
 
@@ -292,11 +291,11 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
     for (i=0; i<mbl; i++) {
       W[cl_begin + i] += sigma;
     }
-
-	info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
-						   Wstruct, Zstruct, tolstruct, work, iwork);
-	assert(info == 0);
-
+    
+    info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
+			       Wstruct, Zstruct, tolstruct, work, iwork);
+    assert(info == 0);
+    
   } else {
 
     /* Determine if refinement should be split into tasks */
@@ -318,26 +317,22 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 				MIN_BISEC_CHUNK);
 	num_tasks *= 4;
       } 
-
+      
       others_part = cl_size - own_part;
       chunk       = others_part/num_tasks;
       
-     subtasks = malloc(sizeof(subtasks_t));
-  //----------------------------------------
-  //   subtasks->taskcount = num_tasks;
-  //   pthread_mutex_init(&subtasks->taskmutex, NULL);
-     subtasks->counter = PMR_create_counter(num_tasks);
-  //----------------------------------------
+      subtasks = malloc(sizeof(subtasks_t));
+      subtasks->counter = PMR_create_counter(num_tasks);
 
-     subtasks->cl = cl;
-     subtasks->nthreads = nthreads;
-     subtasks->num_left = num_left;
-     subtasks->workQ = workQ;
-     subtasks->RRR = RRR;
-     subtasks->Zstruct = Zstruct;
-     subtasks->num_tasks = num_tasks;
-     subtasks->chunk = chunk;
-
+      subtasks->cl = cl;
+      subtasks->nthreads = nthreads;
+      subtasks->num_left = num_left;
+      subtasks->workQ = workQ;
+      subtasks->RRR = RRR;
+      subtasks->Zstruct = Zstruct;
+      subtasks->num_tasks = num_tasks;
+      subtasks->chunk = chunk;
+      
       rf_begin = cl_begin;
       p        = Windex[cl_begin];
       for (i=0; i<num_tasks; i++) {
@@ -350,8 +345,8 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 	if (rf_begin <= rf_end)
 	  PMR_insert_task_at_back(workQ->r_queue, task);
 	else
-	  sem_post(&sem); /* case chunk=0 */
-
+	  PMR_decrement_counter(subtasks->counter, 1);
+	
 	rf_begin = rf_end + 1;
 	p        = q      + 1;
       }
@@ -452,7 +447,7 @@ int PMR_create_subtasks(cluster_t *cl, int tid, int nthreads,
   max_size = fmax(1, PMR_get_counter_value(num_left) /
 		     (fmin(depth+1,4)*nthreads) );
   task_inserted = true;
-  avggap_factor = 0.8;
+  avggap_factor = 1.0;
 
   new_first = cl_begin;
   for (i=cl_begin; i<=cl_end; i++) {    
