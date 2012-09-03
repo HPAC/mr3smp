@@ -184,7 +184,7 @@ int mrrr(char *jobz, char *range, int *n, double *restrict D,
 
 /* Set the min. relative gap for an eigenvalue to be considered 
  * well separated, that is a singleton; this is a very important 
- * parameter of the computation; default: 10e-3 */
+ * parameter of the computation; default: 1e-3 */
 #define MIN_RELGAP           1e-3
 
 /* Set how many iterations should be executed to find the root 
