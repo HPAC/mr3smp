@@ -133,7 +133,7 @@ typedef struct {
   int    nbl;
   int    rf_begin;
   int    rf_end;
-  int    spdiam;
+  double spdiam;
   double *D;
   double *DE2;
   val_t  *Wstruct;
