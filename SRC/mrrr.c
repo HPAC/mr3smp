@@ -233,7 +233,7 @@ int mrrr(char *jobz, char *range, int *np, double *restrict D,
   } else {
     tolstruct->rtol1 = sqrt(DBL_EPSILON);
     tolstruct->rtol1 = fmin(tolstruct->rtol1, 1e-2 * MIN_RELGAP);
-    tolstruct->rtol2 = sqrt(DBL_EPSILON)*5.0E-3;
+    tolstruct->rtol2 = tolstruct->rtol1*5.0E-3;
     tolstruct->rtol2 = fmin(tolstruct->rtol2, MIN_RELGAP * 5.0E-6);
     tolstruct->rtol2 = fmax(tolstruct->rtol2, 4.0 * DBL_EPSILON);
   }

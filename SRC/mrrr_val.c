@@ -376,7 +376,7 @@ int mrrr_val(char *jobz, char *range, int nthreads, in_t *Dstruct,
     /* Compute desired eigenvalues by bisection or dqds */
     if (!useDQDS) {
       /* Bisection has been used before, now refine */
-
+      
       info = refine_eigval_approx(max_nthreads, ibgn, iend, wbgn, 
 				  wend, ilow, iupp, sigma, spdiam, 
 				  Dstruct, Wstruct, tolstruct, work, 
