@@ -469,9 +469,9 @@ int PMR_create_subtasks(cluster_t *cl, int tid, int nthreads,
   double    avggap, avggap_factor;
 
   max_size = fmax(1, PMR_get_counter_value(num_left) /
-		     (fmin(depth+3,8)*nthreads) );
+		     (4*nthreads) );
   task_inserted = true;
-  avggap_factor = 1.0;
+  avggap_factor = 2.0;
 
   new_first = cl_begin;
   for (i=cl_begin; i<=cl_end; i++) {    
