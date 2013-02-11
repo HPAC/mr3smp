@@ -118,7 +118,11 @@ int PMR_insert_task_at_front(queue_t *queue, task_t *task)
 {
   int info;
   
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_lock(&queue->lock);
+#else
   info = pthread_spin_lock(&queue->lock);
+#endif
   assert(info == 0);
 
   queue->num_tasks++;
@@ -130,7 +134,11 @@ int PMR_insert_task_at_front(queue_t *queue, task_t *task)
     queue->head->prev = task;
   queue->head = task;
 
+#ifdef NOSPINLOCKS
+  info = pthread_mutex_unlock(&queue->lock);
+#else
   info = pthread_spin_unlock(&queue->lock);
+#endif
   assert( info == 0);
 
   return(info);
