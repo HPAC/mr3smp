@@ -244,6 +244,7 @@ int mrrr_val(char *jobz, char *range, int nthreads, in_t *Dstruct,
     *iup = negcounts[1];
   }
   nvals = *iup - *ilp + 1;
+  *mp = nvals;
 
   /* If jobz="C" all done */
   if (jobz[0] == 'C' || jobz[0] == 'c') {
