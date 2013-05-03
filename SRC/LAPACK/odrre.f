@@ -345,13 +345,13 @@
       INTEGER            ISEED( 4 )
 *     ..
 *     .. External Functions ..
-      LOGICAL            LSAME
-      DOUBLE PRECISION            DLAMCH
-      EXTERNAL           DLAMCH, LSAME
+      LOGICAL            OLSAME
+      DOUBLE PRECISION            ODMCH
+      EXTERNAL           ODMCH, OLSAME
 
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           ODCPY, DLARNV, ODRRA, ODRRB, ODRRC, ODRRD,
+      EXTERNAL           ODCPY, ODRNV, ODRRA, ODRRB, ODRRC, ODRRD,
      $                   ODSQ2
 *     ..
 *     .. Intrinsic Functions ..
@@ -366,19 +366,19 @@
 *
 *     Decode RANGE
 *
-      IF( LSAME( RANGE, 'A' ) ) THEN
+      IF( OLSAME( RANGE, 'A' ) ) THEN
          IRANGE = ALLRNG
-      ELSE IF( LSAME( RANGE, 'V' ) ) THEN
+      ELSE IF( OLSAME( RANGE, 'V' ) ) THEN
          IRANGE = VALRNG
-      ELSE IF( LSAME( RANGE, 'I' ) ) THEN
+      ELSE IF( OLSAME( RANGE, 'I' ) ) THEN
          IRANGE = INDRNG
       END IF
 
       M = 0
 
 *     Get machine constants
-      SAFMIN = DLAMCH( 'S' )
-      EPS = DLAMCH( 'P' )
+      SAFMIN = ODMCH( 'S' )
+      EPS = ODMCH( 'P' )
 
 *     Set parameters
       RTL = SQRT(EPS)
@@ -559,7 +559,7 @@
          IF(( (IRANGE.EQ.ALLRNG) .AND. (.NOT. FORCEB) ).OR.USEDQD) THEN
 *           Case of DQDS
 *           Find approximations to the extremal eigenvalues of the block
-            CALL DLARRK( IN, 1, GL, GU, D(IBEGIN),
+            CALL ODRRK( IN, 1, GL, GU, D(IBEGIN),
      $               E2(IBEGIN), PIVMIN, RTL, TMP, TMP1, IINFO )
             IF( IINFO.NE.0 ) THEN
                INFO = -1
@@ -568,7 +568,7 @@
             ISLEFT = MAX(GL, TMP - TMP1
      $               - HNDRD * EPS* ABS(TMP - TMP1))
 
-            CALL DLARRK( IN, IN, GL, GU, D(IBEGIN),
+            CALL ODRRK( IN, IN, GL, GU, D(IBEGIN),
      $               E2(IBEGIN), PIVMIN, RTL, TMP, TMP1, IINFO )
             IF( IINFO.NE.0 ) THEN
                INFO = -1
@@ -764,7 +764,7 @@
                ISEED( I ) = 1
  122        CONTINUE
 
-            CALL DLARNV(2, ISEED, 2*IN-1, WORK(1))
+            CALL ODRNV(2, ISEED, 2*IN-1, WORK(1))
             DO 125 I = 1,IN-1
                D(IBEGIN+I-1) = D(IBEGIN+I-1)*(ONE+EPS*PERT*WORK(I))
                E(IBEGIN+I-1) = E(IBEGIN+I-1)*(ONE+EPS*PERT*WORK(IN+I))
