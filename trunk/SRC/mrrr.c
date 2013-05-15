@@ -238,7 +238,8 @@ int mrrr(char *jobz, char *range, int *np, double *restrict D,
     tolstruct->rtol2 = fmax(tolstruct->rtol2, 4.0 * DBL_EPSILON);
   }
   /* LAPACK: tolstruct->bsrtol = sqrt(DBL_EPSILON); */
-  tolstruct->bsrtol = fmin(tolstruct->rtol1, sqrt(DBL_EPSILON));
+  //  tolstruct->bsrtol = fmin(tolstruct->rtol1, sqrt(DBL_EPSILON));
+  tolstruct->bsrtol = MIN_RELGAP;
   tolstruct->RQtol  = 2.0 * DBL_EPSILON;
  
   /*  Compute the desired eigenvalues */

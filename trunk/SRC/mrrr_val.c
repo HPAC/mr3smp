@@ -501,7 +501,9 @@ int find_eigval_approx(int max_nthreads, char *range, in_t *Dstruct,
   while (nthreads > 1 && nvals/nthreads < MIN_BISEC_CHUNK)
     nthreads--;
   
-  if (nthreads > 1) {
+  /* Disabled the parallel execution if matrix splits into multiple blocks 
+     as it is not reliable as it is; need to be done with more care */
+  if (nthreads > 1 && nsplit == 1) {
     
     threads = (pthread_t *) malloc( nthreads * sizeof(pthread_t) );
     assert(threads != NULL);
