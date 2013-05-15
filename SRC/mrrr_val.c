@@ -861,6 +861,7 @@ int compute_root_rrr(bool allrng_no_bisec, bool useDQDS,
    * with not too much element growth */
   if (useDQDS) {   
     tau = spdiam * DBL_EPSILON * nbl + 2.0 * pivmin;  
+    tau = fmax(tau, 2*DBL_EPSILON*fabs(sigma));
   } else {
     if (mbl > 1) {
       clwdth = W[wend] + Werr[wend] - W[wbgn] - Werr[wbgn];
