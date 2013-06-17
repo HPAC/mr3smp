@@ -74,9 +74,9 @@ int PMR_process_r_task(refine_t *rf, int tid, val_t *Wstruct,
 
   /* Others */
   int info, offset, taskcount, rf_end, i;
-	double sigma;
-	double *restrict L;
-	double *restrict W;
+  double sigma;
+  double *restrict L;
+  double *restrict W;
 
   offset = Windex[rf_begin] - 1;
 

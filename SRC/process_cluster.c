@@ -311,13 +311,13 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
        * are involved to get better load balancing; my first version 
        * had gradual smaller task for even better load balancing, 
        * but I thought through the absolute splitting one could get rid 
-       * of this slightly ugly fudging */
-      if (num_tasks >= (int) ceil((1.0-(1.0/NUM_SOCKETS))*nthreads)) {
-	own_part  = (int) fmax( ceil( (double) own_part / 2.0 ),
-				MIN_BISEC_CHUNK);
-	num_tasks *= 4;
-      } 
-      
+       * of fudging */
+      /* if (num_tasks >= (int) ceil((1.0-(1.0/NUM_SOCKETS))*nthreads)) { */
+      /* 	own_part  = (int) fmax( ceil( (double) own_part / 2.0 ), */
+      /* 			                 MIN_BISEC_CHUNK); */
+      /*  num_tasks *= 4; */
+      /* }  */
+
       others_part = cl_size - own_part;
       chunk       = others_part/num_tasks;
       
@@ -340,13 +340,16 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 	q      = p        + chunk - 1;
 	
 	task = PMR_create_r_task(rf_begin, D, DLL, p, q, bl_size, 
-                                 bl_spdiam, tid, subtasks);
-
-	if (rf_begin <= rf_end)
-	  PMR_insert_task_at_back(workQ->r_queue, task);
-	else
-	  PMR_decrement_counter(subtasks->counter, 1);
+                                                     bl_spdiam, tid, subtasks);
 	
+	if (rf_begin <= rf_end) {
+	  PMR_insert_task_at_back(workQ->r_queue, task);
+	} else {
+	  free(task->data);
+	  free(task);
+	  PMR_decrement_counter(subtasks->counter, 1);
+	}	
+
 	rf_begin = rf_end + 1;
 	p        = q      + 1;
       }
@@ -383,6 +386,9 @@ int refine_eigvals(cluster_t *cl, int tid, int nthreads,
 	      info = PMR_create_subtasks(cl, tid, nthreads, num_left, workQ, RRR, 
 				     Wstruct, Zstruct, tolstruct, work, iwork);
 	      assert(info == 0);
+
+	      PMR_destroy_counter(subtasks->counter); 
+	      free(subtasks);
       }
 
     } else {
