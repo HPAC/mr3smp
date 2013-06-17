@@ -360,6 +360,7 @@
          IWORK( 5 ) = IL - 1
          IWORK( 6 ) = IU
 *
+
          CALL ODEBZ( 3, ITMAX, N, 2, 2, NB, ATOLI, RTOLI, PIVMIN,
      $         D, E, E2, IWORK( 5 ), WORK( N+1 ), WORK( N+5 ), IOUT,
      $                IWORK, W, IBLOCK, IINFO )
@@ -383,6 +384,7 @@
             WUL = WORK( N+1 )
             NWU = IWORK( 3 )
          END IF
+
 *        On exit, the interval [WL, WLU] contains a value with negcount NWL,
 *        and [WUL, WU] contains a value with negcount NWU.
          IF( NWL.LT.0 .OR. NWL.GE.N .OR. NWU.LT.1 .OR. NWU.GT.N ) THEN
