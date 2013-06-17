@@ -116,15 +116,19 @@ typedef struct {
 
 typedef struct {
   int       tid;
+  int       il;
+  int       iu;
   int       my_il;
   int       my_iu;
-  in_t      *Dstruct;
-  val_t     *Wstruct;
-  tol_t     *tolstruct;
-  double    *W;
-  double    *Werr;
-  int       *iblock;
-  int       *Windex;
+  int       n;
+  double    *restrict D;
+  double    *restrict E;
+  double    *restrict E2;
+  double    *restrict W;
+  double    *restrict Werr;
+  int           *restrict Windex;
+  double    *restrict gersch;
+  tol_t        *tolstruct;
 } aux1_t;
 
 

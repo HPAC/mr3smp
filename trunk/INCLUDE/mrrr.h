@@ -151,7 +151,7 @@ int mrrr(char *jobz, char *range, int *n, double *restrict D,
 
 /* Set the number of threads in case PMR_NUM_THREADS is not 
  * specified */
-#define DEFAULT_NUM_THREADS    4
+#define DEFAULT_NUM_THREADS    1
 
 /* Set the minumum matrix size for which the multi-threaded code
  * is called. If the matrix is smaller DSTEMR will be called */  
