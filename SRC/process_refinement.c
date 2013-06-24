@@ -31,7 +31,7 @@
  *
  * Coded by Matthias Petschow (petschow@aices.rwth-aachen.de),
  * September 2010, modified by Elmar Peise, September 2011
- * Version 1.1
+ * Version 1.2
  *
  * This code was the result of a collaboration between 
  * Matthias Petschow and Paolo Bientinesi. When you use this 
