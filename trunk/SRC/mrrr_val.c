@@ -563,6 +563,7 @@ int mrrr_val(char *jobz, char *range, int nthreads, in_t *Dstruct,
   	W[jee] = W[je];
   	Wcopy[jee] = Wcopy[je];
   	Werr[jee] = Werr[je];
+	Wgap[jee] = Wgap[je];
   	Windex[jee] = Windex[je];
   	iblock[jee] = iblock[je];
   	jee++;
