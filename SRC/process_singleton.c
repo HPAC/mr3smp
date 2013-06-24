@@ -137,7 +137,7 @@ int PMR_process_s_task(singleton_t *sng, int tid, counter_t *num_left,
     right   = Wshifted[i] + Werr[i];
     i_local = Windex[i];
     r       = 0;
-    
+
     /* compute left and right gap */
     if (i == bl_begin)
       lgap = DBL_EPSILON * fmax(fabs(left), fabs(right));

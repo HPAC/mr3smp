@@ -4,8 +4,8 @@ CC = gcc
 FC = gfortran
 
 # Compiler flags
-CFLAGS = -O3 -pthread 
-FFLAGS = -O3 -funderscoring
+CFLAGS = -O3 -g -pthread 
+FFLAGS = -O3 -g -funderscoring
 
 # Archiver and flags used when building the archive
 AR = /usr/bin/ar 
