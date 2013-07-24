@@ -72,7 +72,7 @@ typedef struct {
 
 /* Functionality of the queue */
 queue_t *PMR_create_empty_queue(void);
-int      PMR_insert_task_at_fron(queue_t *queue, task_t *task);
+int      PMR_insert_task_at_front(queue_t *queue, task_t *task);
 int      PMR_insert_task_at_back(queue_t *queue, task_t *task);
 task_t  *PMR_remove_task_at_front(queue_t *queue);
 task_t  *PMR_remove_task_at_back(queue_t *queue);
