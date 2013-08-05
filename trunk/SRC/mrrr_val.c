@@ -285,6 +285,8 @@ int mrrr_val(char *jobz, char *range, int nthreads, in_t *Dstruct,
   useDQDS = (irange == allrng && !force_bisection) ? true : false;
   
   if (useDQDS) {    
+    wl = gl;
+    wu = gu;
     *vlp = gl;
     *vup = gu;
   } else if (!useDQDS) {
