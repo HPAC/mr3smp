@@ -4,7 +4,7 @@ FC = ifort
 
 # Compiler flags
 CFLAGS = -pthread -O3 -restrict
-FFLAGS = -nofor-main -O3 -assume underscore
+FFLAGS = -nofor-main -O3 -assume underscore -openmp
 
 # Archiver and flags used when building the archive
 AR = /usr/bin/ar 
