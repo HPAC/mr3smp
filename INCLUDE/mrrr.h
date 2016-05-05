@@ -281,8 +281,8 @@ int dsyeig(char *jobz, char *range, char *uplo, int *n, double *A,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A stored
- *                   "U" - Lower triangle of A stored
+ * uplo              "L" - Lower triangle of A stored
+ *                   "U" - Upper triangle of A stored
  * n                 Order of the matrix A
  * lda               Leading dimension of matrix A; 
  *                   often equal to matrix size n
@@ -366,8 +366,8 @@ int dsygeig(int *itype, char *jobz, char *range, char *uplo, int *n,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A and B stored
- *                   "U" - Lower triangle of A and B stored
+ * uplo              "L" - Lower triangle of A and B stored
+ *                   "U" - Upper triangle of A and B stored
  * n                 Order of the matrix A and B
  * lda               Leading dimension of matrix A;
  *                   often equal to matrix size n
@@ -455,8 +455,8 @@ int dspeig(char *jobz, char *range, char *uplo, int *n, double *AP,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A stored
- *                   "U" - Lower triangle of A stored
+ * uplo              "L" - Lower triangle of A stored
+ *                   "U" - Upper triangle of A stored
  * n                 Order of the matrix A
  * ldz               Leading dimension of eigenvector matrix Z; 
  *                   often equal to matrix size n
@@ -550,8 +550,8 @@ int zheeig(char *jobz, char *range, char *uplo, int *n,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A stored
- *                   "U" - Lower triangle of A stored
+ * uplo              "L" - Lower triangle of A stored
+ *                   "U" - Upper triangle of A stored
  * n                 Order of the matrix A
  * lda               Leading dimension of matrix A; 
  *                   often equal to matrix size n
@@ -639,8 +639,8 @@ int zhegeig(int *itype, char *jobz, char *range, char *uplo, int *np,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A and B stored
- *                   "U" - Lower triangle of A and B stored
+ * uplo              "L" - Lower triangle of A and B stored
+ *                   "U" - Upper triangle of A and B stored
  * n                 Order of the matrix A and B
  * lda               Leading dimension of matrix A;
  *                   often equal to matrix size n
@@ -730,8 +730,8 @@ int zhpeig(char *jobz, char *range, char *uplo, int *np,
  * range             "A" - all
  *                   "V" - by interval: (VL,VU]
  *                   "I" - by index:     IL-IU
- * uplo              "L" - Upper triangle of A stored
- *                   "U" - Lower triangle of A stored
+ * uplo              "L" - Lower triangle of A stored
+ *                   "U" - Upper triangle of A stored
  * n                 Order of the matrix A
  * ldz               Leading dimension of eigenvector matrix Z; 
  *                   often equal to matrix size n
