@@ -58,7 +58,7 @@
 #define EMPTY_RQ_ITER 20
 
 
-static inline void mrrr_dscal(int*, double*, double restrict*, int *);
+static inline void mrrr_dscal(int*, double*, double *restrict, int *);
 
 
 
