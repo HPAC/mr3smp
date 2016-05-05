@@ -203,8 +203,8 @@ The symmetric case:
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A stored                 #
-#                   "U" - Lower triangle of A stored                 #
+# uplo              "L" - Lower triangle of A stored                 #
+#                   "U" - Upper triangle of A stored                 #
 # n                 Order of the matrix A                            #
 # lda               Leading dimension of matrix A;                   #
 #                   often equal to matrix size n                     #
@@ -293,8 +293,8 @@ The symmetric case (packed storage):
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A stored                 #
-#                   "U" - Lower triangle of A stored                 #
+# uplo              "L" - Lower triangle of A stored                 #
+#                   "U" - Upper triangle of A stored                 #
 # n                 Order of the matrix A                            #
 # ldz               Leading dimension of eigenvector matrix Z;       #
 #                   often equal to matrix size n                     #
@@ -384,8 +384,8 @@ The Hermitian case (only added to 'libmrrr.a' if specified in
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A stored                 #
-#                   "U" - Lower triangle of A stored                 #
+# uplo              "L" - Lower triangle of A stored                 #
+#                   "U" - Upper triangle of A stored                 #
 # n                 Order of the matrix A                            #
 # lda               Leading dimension of matrix A;                   #
 #                   often equal to matrix size n                     #
@@ -477,8 +477,8 @@ The Hermitian case (packed storage; only added to if specified in
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A stored                 #
-#                   "U" - Lower triangle of A stored                 #
+# uplo              "L" - Lower triangle of A stored                 #
+#                   "U" - Upper triangle of A stored                 #
 # n                 Order of the matrix A                            #
 # ldz               Leading dimension of eigenvector matrix Z;       #
 #                   often equal to matrix size n                     #
@@ -581,8 +581,8 @@ Symmetric-definite case:
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A and B stored           #
-#                   "U" - Lower triangle of A and B stored           #
+# uplo              "L" - Lower triangle of A and B stored           #
+#                   "U" - Upper triangle of A and B stored           #
 # n                 Order of the matrix A and B                      #
 # lda               Leading dimension of matrix A;                   #
 #                   often equal to matrix size n                     #
@@ -681,8 +681,8 @@ Symmetric-definite case (packed storage):
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A and B stored           #
-#                   "U" - Lower triangle of A and B stored           #
+# uplo              "L" - Lower triangle of A and B stored           #
+#                   "U" - Upper triangle of A and B stored           #
 # n                 Order of the matrix A and B                      #
 # ldz               Leading dimension of matrix Z;                   #
 #                   often equal to matrix size n                     #
@@ -784,8 +784,8 @@ Hermitian-definite case:
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A and B stored           #
-#                   "U" - Lower triangle of A and B stored           #
+# uplo              "L" - Lower triangle of A and B stored           #
+#                   "U" - Upper triangle of A and B stored           #
 # n                 Order of the matrix A and B                      #
 # lda               Leading dimension of matrix A;                   #
 #                   often equal to matrix size n                     #
@@ -885,8 +885,8 @@ Hermitian-definite case (packed storage):
 # range             "A" - all                                        #
 #                   "V" - by interval: (VL,VU]                       #
 #                   "I" - by index:     IL-IU                        #
-# uplo              "L" - Upper triangle of A and B stored           #
-#                   "U" - Lower triangle of A and B stored           #
+# uplo              "L" - Lower triangle of A and B stored           #
+#                   "U" - Upper triangle of A and B stored           #
 # n                 Order of the matrix A and B                      #
 # ldz               Leading dimension of matrix Z;                   #
 #                   often equal to matrix size n                     #
